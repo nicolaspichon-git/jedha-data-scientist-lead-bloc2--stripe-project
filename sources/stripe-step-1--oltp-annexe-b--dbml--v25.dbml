@@ -1,0 +1,616 @@
+// =====================================================================
+// STRIPE PROJECT
+// Annexe 1.B : Modèle de données transactionnel physique
+// Version : v25
+// Format : DBML (Database Markup Language) — https://dbml.dbdiagram.io
+// Cas d'usage métier : NoSQL / Stripe Business Case
+// Objectif : schéma normalisé (3NF), intégrité ACID, débit élevé,
+//            détection de fraude en temps réel.
+// Nomenclature : noms de tables en PascalCase, colonnes en snake_case.
+// Compatible : dbdiagram.io, dbml-cli (dbml2sql), DBML VS Code.
+// =====================================================================
+
+Project stripe_oltp {
+  database_type: "PostgreSQL"
+  Note: '''
+    Modèle Transactionnel Stripe.
+    - Clés primaires en UUID (génération distribuée, sharding) ;
+    - Entité centrale : Transaction ;
+    - Fraude, remboursements et rétrofacturations découplés pour ne pas verrouiller la table transactionnelle ;
+    - Énumérés à métadonnées gérés par tables de référence (clé naturelle lisible) ;
+    - Certains énumérés courts et figés sont laissés en varchar avec contrainte CHECK à l'implémentation ;
+    - PricingPlan / PricingPlanFee et Transaction.pricing_plan_id / fee_amount tracent la commission Stripe ;
+  '''
+}
+
+// =====================================================================
+// RÉFÉRENTIELS (GÉOGRAPHIQUES, MONÉTAIRES, ETC.)
+// =====================================================================
+
+Table Country [headercolor: #95A5A6] {
+  country_code varchar(2) [pk, note: "Code ISO 3166-1 alpha-2"]
+  name varchar(100) [not null]
+  region varchar(50) [note: "Dénormalisation assumée : regroupement analytique"]
+
+  Note: "Référentiel des pays / régions. Donnée statique."
+}
+
+Table Currency [headercolor: #95A5A6] {
+  currency_code varchar(3) [pk, note: "Code ISO 4217"]
+  name varchar(50) [not null]
+  decimals smallint [not null, default: 2, note: "Décimales ISO 4217 (JPY=0, BHD=3)"]
+
+  Note: "Référentiel pur des devises. Donnée statique, sans taux de change."
+}
+
+// =====================================================================
+// CLIENTS, PAIEMENTS ET ABONNEMENTS
+// =====================================================================
+
+Table Customer [headercolor: #27AE60] {
+  customer_id uuid [pk, default: `gen_random_uuid()`]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null]
+  email varchar(320) [not null]
+  country_code varchar(2) [ref: > Country.country_code]
+  created_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    (merchant_id, email) [unique]
+  }
+  Note: '''
+    Modélise la RELATION client-marchand, non la personne physique.
+    Une même personne achetant chez trois marchands produit trois
+    lignes distinctes : cloisonnement voulu (confidentialité, RGPD,
+    responsabilité de traitement).
+  '''
+}
+
+Table PaymentMethodType [headercolor: #27AE60] {
+  type_code varchar(20) [pk, note: "card | bank_transfer | wallet | direct_debit"]
+  label varchar(100) [not null]
+  requires_card_details boolean [not null, default: false]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: "Types de moyens de paiement supportés."
+}
+
+Table CardBrand [headercolor: #27AE60] {
+  brand_code varchar(20) [pk, note: "visa | mastercard | amex | discover | ..."]
+  label varchar(100) [not null]
+  is_active boolean [not null, default: true]
+
+  Note: "Réseaux de cartes. Liste vivante : nouveaux réseaux régionaux."
+}
+
+Table PaymentMethod [headercolor: #27AE60] {
+  payment_method_id uuid [pk, default: `gen_random_uuid()`]
+  customer_id uuid [ref: > Customer.customer_id, not null]
+  type_code varchar(20) [ref: > PaymentMethodType.type_code, not null]
+  brand_code varchar(20) [ref: > CardBrand.brand_code, note: "Null si non applicable"]
+  card_last4 char(4) [note: "Jamais le PAN complet (conformité PCI-DSS)"]
+  expiry date
+  is_default boolean [not null, default: false]
+  created_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    customer_id
+  }
+  Note: "Moyens de paiement enregistrés. Aucune donnée de carte sensible en clair."
+}
+
+Table SubscriptionStatus [headercolor: #27AE60] {
+  status_code varchar(20) [pk, note: "active | paused | past_due | canceled"]
+  label varchar(100) [not null]
+  is_billable boolean [not null, default: false, note: "Génère des prélèvements récurrents"]
+  is_terminal boolean [not null, default: false, note: "Statut final (canceled)"]
+  triggers_dunning boolean [not null, default: false, note: "Déclenche la procédure de relance (past_due)"]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Statuts du cycle de vie d'un abonnement.
+    past_due est l'état le plus délicat : le prélèvement a échoué,
+    l'abonnement n'est ni actif ni résilié — il déclenche une procédure
+    de relance échelonnée (dunning) avant résiliation automatique.
+  '''
+}
+
+Table Subscription [headercolor: #27AE60] {
+  subscription_id uuid [pk, default: `gen_random_uuid()`]
+  customer_id uuid [ref: > Customer.customer_id, not null]
+  product_id uuid [ref: > Product.product_id, not null]
+  payment_method_id uuid [ref: > PaymentMethod.payment_method_id, not null, note: "Moyen de paiement autorisé pour le prélèvement récurrent"]
+  status_code varchar(20) [ref: > SubscriptionStatus.status_code, not null, default: "active"]
+  billing_cycle varchar(20) [not null, note: "CHECK (billing_cycle IN ('weekly','monthly','yearly')) — liste courte et figée"]
+  amount decimal(18,2) [not null, note: "Montant prélevé à chaque échéance"]
+  currency_code varchar(3) [ref: > Currency.currency_code, not null]
+  started_at timestamp [not null, default: `now()`]
+  current_period_end timestamp [note: "Fin de la période payée en cours"]
+  canceled_at timestamp [note: "Date de demande de résiliation"]
+  failed_attempt_count smallint [not null, default: 0, note: "Tentatives de prélèvement échouées consécutives"]
+
+  Indexes {
+    customer_id
+    product_id
+    payment_method_id
+    status_code
+    current_period_end [note: "Identifier les échéances à prélever"]
+  }
+  Note: '''
+    Accord de paiement récurrent : le client autorise un marchand à le
+    débiter à intervalle régulier jusqu'à résiliation.
+
+    SERVICE DU MARCHAND, INFRASTRUCTURE DE STRIPE : la relation
+    d'abonnement (offre, prix, conditions) appartient au marchand ;
+    Stripe fournit le mécanisme d'exécution (stockage tokenisé du moyen
+    de paiement, déclenchement des prélèvements, gestion des échecs).
+
+    canceled_at marque la DEMANDE de résiliation ; l'abonnement reste
+    généralement actif jusqu'à current_period_end.
+  '''
+}
+
+// =====================================================================
+// MARCHANDS ET PRODUITS
+// =====================================================================
+
+Table MerchantStatus [headercolor: #3498DB] {
+  status_code varchar(20) [pk, note: "active | suspended | closed"]
+  label varchar(100) [not null]
+  can_process_payments boolean [not null, default: false, note: "Encaissement autorisé dans cet état"]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: "Statuts du cycle de vie d'un marchand."
+}
+
+Table Merchant [headercolor: #3498DB] {
+  merchant_id uuid [pk, default: `gen_random_uuid()`]
+  legal_name varchar(255) [not null]
+  country_code varchar(2) [ref: > Country.country_code, not null]
+  status_code varchar(20) [ref: > MerchantStatus.status_code, not null, default: "active"]
+  created_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    country_code
+    status_code
+  }
+  Note: '''
+    Entité qui encaisse les paiements. Rôle réglementé (KYC/KYB,
+    responsabilité en cas de litige, compte de reversement) —
+    d'où une entité distincte de Customer.
+  '''
+}
+
+Table Product [headercolor: #3498DB] {
+  product_id uuid [pk, default: `gen_random_uuid()`]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null]
+  name varchar(255) [not null]
+  unit_price decimal(18,2) [not null]
+  currency_code varchar(3) [ref: > Currency.currency_code, not null]
+  active boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    merchant_id
+  }
+  Note: "Catalogue produits par marchand."
+}
+
+// =====================================================================
+// TARIFICATION ET COMMISSION
+// Ajouté suite à la review MCD : sans ces deux tables, la commission
+// Stripe (fee_amount_eur côté OLAP) n'avait aucune source traçable
+// côté OLTP. Modélise le MCD PRICING_PLAN / BenefitsFrom / IsQuotedIn /
+// IsRatedUnder.
+// =====================================================================
+
+Table PricingPlan [headercolor: #3498DB] {
+  pricing_plan_id uuid [pk, default: `gen_random_uuid()`]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null]
+  commission_rate decimal(5,4) [not null, note: "Taux de commission, ex. 0.0290 pour 2,90 % — indépendant de toute devise"]
+  effective_from date [not null]
+  effective_to date [note: "Null = plan en vigueur"]
+
+  Indexes {
+    (merchant_id, effective_from)
+  }
+  Note: '''
+    Grille tarifaire d'un marchand, versionnée dans le temps
+    (renégociation de commission, changement de catégorie de risque).
+    À un instant donné, un seul plan est en vigueur par marchand — non
+    imposable par une contrainte déclarative simple, à vérifier par
+    contrainte applicative ou trigger (absence de chevauchement des
+    plages [effective_from, effective_to) pour un même merchant_id).
+
+    commission_rate est indépendant de la devise (un taux reste le même
+    quel que soit le montant converti). Le frais fixe, lui, dépend de la
+    devise : voir PricingPlanFee.
+  '''
+}
+
+Table PricingPlanFee [headercolor: #3498DB] {
+  pricing_plan_id uuid [ref: > PricingPlan.pricing_plan_id, not null]
+  currency_code varchar(3) [ref: > Currency.currency_code, not null]
+  fixed_fee decimal(18,2) [not null, note: "Frais fixe par transaction dans cette devise, ex. 0.30 pour 0,30 $"]
+
+  Indexes {
+    (pricing_plan_id, currency_code) [pk]
+  }
+  Note: '''
+    Grille de frais fixes par devise pour un plan tarifaire donné —
+    table de jonction issue de l'association n,n IsQuotedIn du MCD.
+    Un plan peut être libellé dans plusieurs devises, chacune avec son
+    propre frais fixe, sans conversion de change nécessaire pour
+    l'appliquer à une transaction réglée dans cette devise.
+  '''
+}
+
+
+// =====================================================================
+// TRANSACTION — entité centrale
+// =====================================================================
+
+Table TransactionStatus [headercolor: #E74C3C] {
+  status_code varchar(20) [pk, note: "successful | failed | refunded | pending"]
+  label varchar(100) [not null, note: "Libellé affichable"]
+  is_terminal boolean [not null, default: false, note: "Statut final (plus d'évolution possible)"]
+  allows_refund boolean [not null, default: false, note: "Un remboursement est-il autorisé ?"]
+  sort_order smallint
+  is_active boolean [not null, default: true, note: "Dépréciation douce sans suppression"]
+
+  Note: '''
+    Porte une logique métier (statut terminal, remboursement autorisé) qu'une contrainte CHECK ne pourrait pas exprimer.
+  '''
+}
+
+Table Transaction [headercolor: #E74C3C] {
+  transaction_id uuid [pk, default: `gen_random_uuid()`]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null]
+  customer_id uuid [ref: > Customer.customer_id, not null]
+  payment_method_id uuid [ref: > PaymentMethod.payment_method_id, not null]
+  product_id uuid [ref: > Product.product_id, note: "Produit acheté — null si paiement libre hors catalogue"]
+  subscription_id uuid [ref: > Subscription.subscription_id, note: "Null si paiement ponctuel ; renseigné si prélèvement récurrent"]
+  pricing_plan_id uuid [ref: > PricingPlan.pricing_plan_id, not null, note: "Plan tarifaire réellement facturé (MCD : IsRatedUnder) — conservé explicitement pour figer l'historique même si le plan du marchand change rétroactivement"]
+  is_merchant_initiated boolean [not null, default: false, note: "Vrai pour un prélèvement d'abonnement : aucun signal comportemental client exploitable par les modèles de fraude"]
+  amount decimal(18,2) [not null]
+  fee_amount decimal(18,2) [not null, note: "Commission Stripe = amount × PricingPlan.commission_rate + PricingPlanFee.fixed_fee (pour currency_code). Valeur dérivée, matérialisée pour la performance — voir MCD règle #16."]
+  currency_code varchar(3) [ref: > Currency.currency_code, not null]
+  status_code varchar(20) [ref: > TransactionStatus.status_code, not null]
+  ip_geolocation varchar(45) [note: "Géolocalisation basée IP (IPv4/IPv6)"]
+  device_type varchar(20) [note: "CHECK (device_type IN ('mobile','desktop','tablet')) — liste courte et figée"]
+  created_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    (merchant_id, created_at)
+    (customer_id, created_at)
+    payment_method_id
+    product_id
+    subscription_id
+    status_code
+    created_at [note: "Support du partitionnement temporel"]
+  }
+  Note: '''
+    - Table centrale du modèle tra  nsactionnel. 
+    - Auto-suffisante : montant, devise et date permettent toutes les conversions a posteriori du côté analytique.
+    - Recommandations : partitionnement par created_at (mensuel) et/ou par merchant_id ; réplication synchrone ; CDC vers OLAP/NoSQL.
+    - pricing_plan_id référence un plan dont bénéficie merchant_id. 
+    - fee_amount doit être recalculable à partir de PricingPlan/PricingPlanFee pour le couple (pricing_plan_id, currency_code) ; 
+      un éventuel écart signale un plan corrigé rétroactivement.
+    - Indexes : Transaction est la table la plus écrite du système et chaque index supplémentaire a un coût réel qui doit être contre-balancé par un gain sur les accès directs courants ; 
+      On n'a donc pas d'index dédié sur pricing_plan_id car les accès directs du type "transactions facturées sous ce plan" utilisés en audit/reporting sont rétrospectifs. 
+  '''
+}
+
+// =====================================================================
+// ENTITÉS DÉPENDANTES DE LA TRANSACTION (relations 1:0..1)
+// Découplées pour éviter d'alourdir et de verrouiller Transaction.
+// =====================================================================
+
+Table Refund [headercolor: #E74C3C] {
+  refund_id uuid [pk, default: `gen_random_uuid()`]
+  transaction_id uuid [ref: - Transaction.transaction_id, not null, unique]
+  amount decimal(18,2) [not null]
+  reason varchar(255)
+  created_at timestamp [not null, default: `now()`]
+
+  Note: '''
+    Remboursement volontaire (au plus un par transaction).
+    Table séparée : la plupart des transactions n'en ont pas —
+    éviter des colonnes NULL sur une table à fort volume.
+  '''
+}
+
+Table ChargebackStatus [headercolor: #E74C3C] {
+  status_code varchar(20) [pk, note: "open | won | lost"]
+  label varchar(100) [not null]
+  is_terminal boolean [not null, default: false]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: "Statuts du cycle de contestation, imposé par les réseaux de cartes."
+}
+
+Table ChargebackReasonCode [headercolor: #E74C3C] {
+  reason_code varchar(20) [pk, note: "Code normalisé par le réseau de cartes"]
+  card_network varchar(20) [not null, note: "visa | mastercard | amex"]
+  label varchar(255) [not null]
+  category varchar(50) [note: "fraud | authorization | processing_error | consumer_dispute"]
+  response_deadline_days smallint [note: "Délai de réponse imposé au marchand"]
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Les réseaux définissent des dizaines de codes, avec libellés et
+    délais propres, et la liste évolue. Cas typique justifiant une
+    table de référence plutôt qu'un CHECK. Pas d'index secondaire :
+    la table reste trop petite (quelques dizaines de lignes) pour
+    qu'un index apporte un bénéfice sur un balayage séquentiel.
+  '''
+}
+
+Table Chargeback [headercolor: #E74C3C] {
+  chargeback_id uuid [pk, default: `gen_random_uuid()`]
+  transaction_id uuid [ref: - Transaction.transaction_id, not null, unique]
+  reason_code varchar(20) [ref: > ChargebackReasonCode.reason_code, not null]
+  status_code varchar(20) [ref: > ChargebackStatus.status_code, not null, default: "open"]
+  created_at timestamp [not null, default: `now()`]
+  resolved_at timestamp
+
+  Indexes {
+    status_code
+    reason_code
+  }
+  Note: '''
+    Litige initié par le client auprès de sa banque. Cycle de vie
+    propre et mises à jour tardives : isolé pour ne pas verrouiller
+    Transaction sur le chemin critique.
+  '''
+}
+
+Table FraudRiskLevel [headercolor: #E74C3C] {
+  risk_level_code varchar(10) [pk, note: "low | medium | high"]
+  label varchar(50) [not null]
+  requires_manual_review boolean [not null, default: false, note: "Déclenche une revue manuelle avant confirmation"]
+  blocks_transaction boolean [not null, default: false, note: "Blocage automatique avant confirmation"]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Porte la logique de décision associée au score de fraude —
+    déclenchement d'une revue manuelle ou d'un blocage automatique —
+    qu'une contrainte CHECK ne pourrait pas exprimer. Même principe que
+    TransactionStatus.allows_refund : la valeur seule ne suffit pas,
+    c'est l'action qu'elle déclenche qui justifie la table.
+
+    Locale à cette section plutôt que dans le groupe d'énumérés du haut :
+    seule FraudScore la référence, même principe que AuditActorType/
+    AuditAction restées locales à la section conformité.
+  '''
+}
+
+Table FraudScore [headercolor: #E74C3C] {
+  fraud_score_id uuid [pk, default: `gen_random_uuid()`]
+  transaction_id uuid [ref: - Transaction.transaction_id, not null, unique]
+  anomaly_score decimal(5,4) [not null, note: "Score 0.0000 à 1.0000"]
+  risk_level_code varchar(10) [ref: > FraudRiskLevel.risk_level_code, not null]
+  model_version varchar(20) [note: "Traçabilité du modèle ayant produit le score"]
+  evaluated_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    risk_level_code [note: "Index partiel recommandé (WHERE risk_level_code = 'high'), non exprimable en DBML — cible la fraction opérationnellement intéressante pour l'alerting"]
+  }
+  Note: '''
+    Score écrit en temps réel par un service séparé, sans verrouiller
+    Transaction. Support de la détection de fraude temps réel.
+  '''
+}
+
+// =====================================================================
+// SECURITE ET CONFORMITÉ
+// Tables en ÉCRITURE SEULE (append-only) : aucun droit UPDATE ni DELETE,
+// même pour les administrateurs. Un journal modifiable ne prouve rien.
+// Sources du reporting de conformité (RGPD, PCI-DSS, CCPA).
+// =====================================================================
+
+Table AuditActorType [headercolor: #8E44AD] {
+  actor_type_code varchar(20) [pk, note: "user | service | system | merchant_api"]
+  label varchar(100) [not null]
+  is_human boolean [not null, default: false, note: "Distingue accès humain et automatisé"]
+  is_active boolean [not null, default: true]
+
+  Note: "Nature de l'acteur à l'origine d'un événement audité."
+}
+
+Table AuditAction [headercolor: #8E44AD] {
+  action_code varchar(30) [pk, note: "read | create | update | delete | export | login | grant | revoke"]
+  label varchar(100) [not null]
+  is_sensitive boolean [not null, default: false, note: "Déclenche une surveillance renforcée"]
+  requires_justification boolean [not null, default: false, note: "Motif métier obligatoire"]
+  is_active boolean [not null, default: true]
+
+  Note: "Types d'actions auditables. is_sensitive alimente l'alerting temps réel."
+}
+
+Table DataAccessLog [headercolor: #8E44AD] {
+  access_log_id uuid [pk, default: `gen_random_uuid()`]
+  actor_id varchar(255) [not null, note: "Identité de l'utilisateur ou du service appelant"]
+  actor_type_code varchar(20) [ref: > AuditActorType.actor_type_code, not null]
+  action_code varchar(30) [ref: > AuditAction.action_code, not null]
+  resource_type varchar(50) [not null, note: "Entité consultée : Customer | Transaction | PaymentMethod ..."]
+  resource_id varchar(64) [note: "Identifiant de l'enregistrement consulté"]
+  merchant_id uuid [ref: > Merchant.merchant_id, note: "Cloisonnement : quel marchand est concerné"]
+  customer_id uuid [ref: > Customer.customer_id, note: "Permet de répondre à une demande d'accès RGPD"]
+  source_ip varchar(45) [note: "Origine de l'appel (IPv4/IPv6)"]
+  user_agent varchar(255)
+  justification varchar(500) [note: "Motif métier, si requires_justification"]
+  was_authorized boolean [not null, default: true, note: "Faux = tentative d'accès refusée"]
+  occurred_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    (customer_id, occurred_at) [note: "Répondre à : qui a consulté les données de ce client ?"]
+    (merchant_id, occurred_at)
+    (actor_id, occurred_at)
+    was_authorized [note: "Index partiel recommandé (WHERE was_authorized = false), non exprimable en DBML — cible les tentatives refusées, plus rares et plus utiles à l'investigation que la masse des accès légitimes"]
+    occurred_at [note: "Partitionnement temporel + rétention"]
+  }
+  Note: '''
+    QUI a accédé à QUOI, QUAND, D'OÙ et POURQUOI.
+    Cœur du rapport de conformité.
+
+    Volume élevé : partitionnement mensuel par occurred_at et
+    archivage à froid au-delà de la durée de conservation.
+    Écrit de façon asynchrone pour ne pas pénaliser le chemin critique.
+
+    Pas d'index dédié sur resource_type : plus faible des index
+    candidats (rapport large, moins fréquent que les besoins par
+    client/marchand/acteur) — à réintroduire si un rapport de
+    conformité par type de ressource s'avère un besoin récurrent.
+  '''
+}
+
+Table ChangeAuditLog [headercolor: #8E44AD] {
+  change_log_id uuid [pk, default: `gen_random_uuid()`]
+  table_name varchar(50) [not null, note: "Table modifiée"]
+  record_id varchar(64) [not null, note: "Identifiant de l'enregistrement modifié"]
+  action_code varchar(30) [ref: > AuditAction.action_code, not null]
+  actor_id varchar(255) [not null]
+  actor_type_code varchar(20) [ref: > AuditActorType.actor_type_code, not null]
+  changed_fields jsonb [note: "Champs modifiés : { champ: { avant, apres } }"]
+  merchant_id uuid [ref: > Merchant.merchant_id]
+  occurred_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    (table_name, record_id, occurred_at)
+    (merchant_id, occurred_at)
+    occurred_at
+  }
+  Note: '''
+    Historique des MODIFICATIONS de données (avant / après).
+    Alimenté par CDC (Change Data Capture) et non par des déclencheurs
+    synchrones : l'écriture d'audit reste hors du chemin transactionnel
+    pour ne pas doubler le coût de chaque INSERT sur Transaction.
+
+    Le format jsonb absorbe des structures hétérogènes selon la table
+    auditée, sans imposer un schéma par entité.
+  '''
+}
+
+Table ConsentRecord [headercolor: #8E44AD] {
+  consent_id uuid [pk, default: `gen_random_uuid()`]
+  customer_id uuid [ref: > Customer.customer_id, not null]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null, note: "Le consentement est donné à un marchand précis"]
+  purpose varchar(100) [not null, note: "Finalité : marketing | analytics | data_sharing | profiling"]
+  is_granted boolean [not null, note: "Accordé ou retiré"]
+  legal_basis varchar(50) [note: "Base légale RGPD : consent | contract | legitimate_interest"]
+  source varchar(50) [note: "Canal de recueil : checkout | email | account_settings"]
+  recorded_at timestamp [not null, default: `now()`]
+
+  Indexes {
+    (customer_id, purpose, recorded_at)
+    (merchant_id, recorded_at)
+  }
+  Note: '''
+    Historique des consentements — append-only : un retrait crée une
+    nouvelle ligne, il n'écrase jamais la précédente. L'état courant se
+    lit sur l'enregistrement le plus récent par (customer_id, purpose).
+
+    Le consentement est rattaché au MARCHAND, cohérent avec le
+    cloisonnement du modèle : un client consent à un marchand, pas à Stripe.
+  '''
+}
+
+Table Regulation [headercolor: #8E44AD] {
+  regulation_code varchar(20) [pk, note: "GDPR | CCPA"]
+  label varchar(100) [not null]
+  response_deadline_days smallint [not null, note: "Délai légal de réponse à une demande d'exercice de droit"]
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Réglementations de protection des données couvertes. Porte le délai
+    légal de réponse (GDPR : 30 jours ; CCPA : 45 jours), pour que
+    DataSubjectRequest.due_at soit dérivable de received_at + ce délai
+    plutôt que dépendant d'un calcul applicatif non vérifié par le
+    schéma — même principe que ChargebackReasonCode.response_deadline_days.
+  '''
+}
+
+Table DataSubjectRequestStatus [headercolor: #8E44AD] {
+  status_code varchar(20) [pk, note: "received | in_progress | fulfilled | rejected"]
+  label varchar(100) [not null]
+  is_terminal boolean [not null, default: false, note: "Statut final (fulfilled, rejected)"]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Statuts du traitement d'une demande d'exercice de droit. Même famille
+    de besoin que TransactionStatus/SubscriptionStatus/ChargebackStatus
+    (statut de workflow avec état terminal) — traité en table pour rester
+    cohérent avec ce précédent déjà établi ailleurs dans le modèle.
+  '''
+}
+
+Table DataSubjectRequest [headercolor: #8E44AD] {
+  request_id uuid [pk, default: `gen_random_uuid()`]
+  customer_id uuid [ref: > Customer.customer_id, not null]
+  merchant_id uuid [ref: > Merchant.merchant_id, not null]
+  request_type varchar(30) [not null, note: "access | rectification | erasure | portability | objection"]
+  regulation_code varchar(20) [ref: > Regulation.regulation_code, not null]
+  status_code varchar(20) [ref: > DataSubjectRequestStatus.status_code, not null, default: "received"]
+  received_at timestamp [not null, default: `now()`]
+  due_at timestamp [not null, note: "Échéance légale — dérivée de received_at + Regulation.response_deadline_days"]
+  fulfilled_at timestamp
+  rejection_reason varchar(500)
+
+  Indexes {
+    (customer_id, received_at)
+    (merchant_id, status_code)
+    status_code
+    due_at [note: "Alerting sur les échéances légales approchantes"]
+  }
+  Note: '''
+    Demandes d'exercice des droits (accès, effacement, portabilité...).
+    Le rapport de conformité doit prouver le respect des DÉLAIS :
+    d'où due_at et fulfilled_at, dont l'écart est l'indicateur audité.
+  '''
+}
+
+Table SecurityIncidentStatus [headercolor: #8E44AD] {
+  status_code varchar(20) [pk, note: "open | investigating | contained | closed"]
+  label varchar(100) [not null]
+  is_terminal boolean [not null, default: false, note: "Statut final (closed)"]
+  sort_order smallint
+  is_active boolean [not null, default: true]
+
+  Note: '''
+    Statuts du cycle de traitement d'un incident de sécurité. Même
+    famille de besoin que TransactionStatus/SubscriptionStatus/
+    ChargebackStatus/DataSubjectRequestStatus — traité en table pour
+    rester cohérent avec ce précédent déjà établi ailleurs dans le modèle.
+  '''
+}
+
+Table SecurityIncident [headercolor: #8E44AD] {
+  incident_id uuid [pk, default: `gen_random_uuid()`]
+  incident_type varchar(50) [not null, note: "unauthorized_access | data_breach | anomalous_activity | failed_auth_burst"]
+  severity varchar(20) [not null, note: "low | medium | high | critical"]
+  merchant_id uuid [ref: > Merchant.merchant_id, note: "Null si incident transverse"]
+  affected_record_count int [note: "Nombre d'enregistrements concernés"]
+  description varchar(1000)
+  detected_at timestamp [not null, default: `now()`]
+  notified_at timestamp [note: "Notification à l'autorité — RGPD : 72 h après détection"]
+  resolved_at timestamp
+  status_code varchar(20) [ref: > SecurityIncidentStatus.status_code, not null, default: "open"]
+
+  Indexes {
+    (severity, detected_at)
+    status_code
+    detected_at
+  }
+  Note: '''
+    Incidents de sécurité détectés. L'écart detected_at / notified_at
+    est un point de contrôle direct du RGPD (délai de 72 heures).
+  '''
+}
+
+// =====================================================================
