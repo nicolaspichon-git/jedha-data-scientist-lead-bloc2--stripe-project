@@ -738,6 +738,6 @@ terminologique entre les deux modèles.
 
 #### Changelog v22 → v25
 
-> **Note de version (v25)** - Alignement sans changement sur le numéro de version du modèle physique.
+> **Note de version (v25)** | Actualisation faisant suite à la revue des indexes et à l'ajout de quatre tables de référence au modèle physique (`FraudRiskLevel`, `Regulation`, `DataSubjectRequestStatus`, `SecurityIncidentStatus`) : correction d'une référence obsolète (`risk_level` avait quitté la liste des `CHECK` sans que cette note le reflète), ajout de la justification manquante des huit listes restées en `CHECK` (égarée lors de la scission du document d'origine), et ajout de la justification des quatre nouvelles tables de référence.
 
 ---

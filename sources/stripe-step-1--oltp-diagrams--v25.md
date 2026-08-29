@@ -1,8 +1,8 @@
 *STRIPE* PROJECT
 ===
 
-# 1. Modèle de Données OLTP
-## D2. Diagramme Entité-Relation (ERD)
+# 1. OLTP Data System
+## D2. OLTP Entity-Relation Diagram
 
 > *Nicolas Pichon - AIA RNCP 38777 / BC02 / D2 : OLTP - ERD / v25 - 2026/10/13.*   
 

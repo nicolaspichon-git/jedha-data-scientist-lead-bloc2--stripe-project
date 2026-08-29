@@ -1,22 +1,13 @@
 *STRIPE* PROJECT
 ===
 
-# 1. Modèle de Données OLTP
+# 1. OLTP Data System
 ## Annexes
-### 1.C. Notes justificatives
+### 1.C. OLTP Supporting Notes
 
 > *Nicolas Pichon - AIA RNCP 38777 / BC02 / D2 : OLTP - Annexe C  / v25 - 2026/10/13.*   
 
 ---
-
-> **Note de version (v25)** | Mise à jour suite à la revue des index et à
-> l'ajout de quatre tables de référence au modèle physique
-> (`FraudRiskLevel`, `Regulation`, `DataSubjectRequestStatus`,
-> `SecurityIncidentStatus`) : correction d'une référence obsolète
-> (`risk_level` avait quitté la liste des `CHECK` sans que cette note le
-> reflète), ajout de la justification manquante des huit listes restées
-> en `CHECK` (égarée lors de la scission du document d'origine), et ajout
-> de la justification des quatre nouvelles tables de référence.
 
 #### 1.C.1. Principes de conception
 ##### 1.C.1.1. Fils conducteurs
@@ -232,24 +223,8 @@ comme `is_terminal` dans `TransactionStatus`, `SubscriptionStatus` et `Chargebac
 - `Regulation.response_deadline_days` représente un délai légal qui prend une valeur différente en fonction de la réglementation GDPR/CCPA.
 Avec cette information de référence, `DataSubjectRequest.due_at` devient dérivable de `received_at` + le délai légal.
 
-#### 1.C.4. Couverture des exigences
-
-| #   | Exigence | Couverture | Source |
-| --- | -------- | ---------- | ------ |
-| BR1 | haut volume, ACID, sync temps réel, disaster recovery | 🟢 Complète depuis la section 1 | Indexation `Transaction`, découplage des entités dépendantes ; DR/réplication/failover section 1 |
-| BR2 | analyse de revenu | 🟢 | `PricingPlan`/`PricingPlanFee`/`Transaction.fee_amount` (section 1.C.2) |
-| BR4 | flux cohérent OLTP↔OLAP↔NoSQL | 🟢 (part OLTP) | CDC via `ChangeAuditLog`, écriture asynchrone hors chemin critique |
-| BR5/TR5 | chiffrement, accès, audit, RGPD/PCI-DSS | 🟢 Très complète | Tables conformité (section 1.C.3) |
-| TR1 | schéma normalisé, intégrité, performance | 🟢 | 3NF, tables de référence porteuses de logique métier, index ciblés |
-| TR3 | scalabilité horizontale, indexation, partitionnement, sharding | 🟢 Complète depuis la section 1 | Index existants ; stratégie de partitionnement/sharding formalisée section 1.2-1.3 |
-| TR4 | cohérence et synchronisation (CDC) | 🟢 | `ChangeAuditLog`, réplication logique (section 1.2) |
-
-###### Couverture du  modèle
-Le choix précis de l'outillage managé (RDS Multi-AZ, Cloud SQL, Aurora...) est hors périmètre. 
-C'est une décision d'infrastructure/déploiement.
-
-#### 1.C.5. Stratégie de réplication, failover et reprise après sinistre
-##### 1.C.5.1. Contexte
+#### 1.C.4. Stratégie de réplication, failover et reprise après sinistre
+##### 1.C.4.1. Contexte
 > Couvre un manque du modèle OLTP : 
 > T1 exige des *"mechanisms for real-time data replication and failover"*, 
 > et BR1 exige explicitement la *"disaster recovery"* - deux points jusqu'ici
@@ -257,7 +232,7 @@ C'est une décision d'infrastructure/déploiement.
 > par le diagramme ERD (D2) et par les notes justificatives des choix de
 > modélisation les plus significatifs.
 
-##### 1.C.5.2. Principes directeurs
+##### 1.C.4.2. Principes directeurs
 
 Le système OLTP porte l'écriture du chemin critique (`Transaction`, `Refund`,
 `Chargeback`, `FraudScore`, `Subscription`) et les journaux de conformité
@@ -274,7 +249,7 @@ continuité :
 Ce tableau justifie une architecture à réplication **différenciée** plutôt
 qu'une politique unique pour toute la base.
 
-##### 1.C.5.3. Réplication temps réel
+##### 1.C.4.3. Réplication temps réel
 ###### Réplication physique en flux
 Réplication physique en flux (streaming replication PostgreSQL) vers au moins deux répliques :
 - **1 réplique synchrone** dans la même région (zone de disponibilité
@@ -295,7 +270,7 @@ c'est le mécanisme modélisé dans `ChangeAuditLog` et documenté comme aliment
 La réplication physique assure la continuité de service. 
 Le CDC logique assure la synchronisation vers les systèmes analytiques (couvre BR4/TR4).
 
-##### 1.C.5.4. Failover
+##### 1.C.4.4. Failover
 ###### Détection et bascule automatiques
 Détection et bascule automatiques via un gestionnaire de haute  disponibilité (Patroni + etcd/Consul, ou équivalent géré par le fournisseur cloud) : élection d'un nouveau primaire parmi les répliques synchrones en cas de perte du nœud primaire, sans intervention manuelle.
   
@@ -311,7 +286,7 @@ un nœud physique : la bascule reste transparente côté application.
 Les répliques asynchrones inter-régions ne participent pas l'élection automatique (latence réseau trop variable pour un quorum fiable).
 Elles ne servent qu'en reprise après sinistre déclarée manuellement (voir 1.4).
 
-##### 1.C.5.5. Reprise après sinistre (disaster recovery)
+##### 1.C.4.5. Reprise après sinistre (disaster recovery)
 ###### Sauvegardes physiques continues
 Sauvegardes physiques continues (WAL archiving en continu + snapshot de base hebdomadaire, via pgBackRest ou équivalent managé), permettant une **restauration à un point dans le temps (PITR)** n'importe où dans la fenêtre de rétention (recommandé : 35 jours, aligné sur les exigences de délai RGPD/PCI-DSS déjà portées par `DataSubjectRequest.due_at`).
 
@@ -324,10 +299,26 @@ Bascule inter-région déclarée manuellement vers la réplique asynchrone dista
 ###### Tables d'audit jamais perdues silencieusement
 Toute purge ou  incohérence détectée sur `DataAccessLog`/`ChangeAuditLog` après un incident de bascule doit elle-même être tracée dans `SecurityIncident`, la table conçue pour capturer les incidents est aussi celle qui documente les incidents touchant l'infrastructure elle-même.
 
-##### 1.C.5.6. Couverture de la stratégie
+##### 1.C.4.6. Couverture de la stratégie
 - Couvre explicitement : 
 	- T1 (*"mechanisms for real-time data replication and failover"*), 
 	- BR1 (*"disaster recovery"*, *"real-time data synchronization"*),
 	- TR3 (haute disponibilité). Reste hors périmètre de ce document, à traiter séparément : le choix précis du fournisseur/outillage managé (RDS Multi-AZ, Cloud SQL, Aurora...), qui est une décision d'infrastructure et non de modélisation de données.
 
 ---
+
+#### 1.C.5. Couverture des exigences
+
+| #   | Exigence | Couverture | Source |
+| --- | -------- | ---------- | ------ |
+| BR1 | haut volume, ACID, sync temps réel, disaster recovery | 🟢 Complète depuis la section 1 | Indexation `Transaction`, découplage des entités dépendantes ; DR/réplication/failover section 1 |
+| BR2 | analyse de revenu | 🟢 | `PricingPlan`/`PricingPlanFee`/`Transaction.fee_amount` (§1.C.2) |
+| BR4 | flux cohérent OLTP↔OLAP↔NoSQL | 🟢 (part OLTP) | CDC via `ChangeAuditLog`, écriture asynchrone hors chemin critique |
+| BR5/TR5 | chiffrement, accès, audit, RGPD/PCI-DSS | 🟢 Très complète | Tables conformité (§1.C.3) |
+| TR1 | schéma normalisé, intégrité, performance | 🟢 | 3NF, tables de référence porteuses de logique métier, index ciblés |
+| TR3 | scalabilité horizontale, indexation, partitionnement, sharding | 🟢 Complète depuis la section 1 | Index existants ; stratégie de partitionnement/sharding formalisée au §1.C.4 |
+| TR4 | cohérence et synchronisation (CDC) | 🟢 | `ChangeAuditLog`, réplication logique (§1.C.4) |
+
+###### Couverture du  modèle
+Le choix précis de l'outillage managé (RDS Multi-AZ, Cloud SQL, Aurora...) est hors périmètre. 
+C'est une décision d'infrastructure/déploiement.

@@ -1,11 +1,10 @@
 // =====================================================================
 // STRIPE PROJECT
-// Annexe 1.B : Modèle de données transactionnel physique
+// Annexe 1.B : OLPT Physical Data Model
 // Version : v25
 // Format : DBML (Database Markup Language) — https://dbml.dbdiagram.io
 // Cas d'usage métier : NoSQL / Stripe Business Case
-// Objectif : schéma normalisé (3NF), intégrité ACID, débit élevé,
-//            détection de fraude en temps réel.
+// Objectif : schéma normalisé (3NF), intégrité ACID, débit élevé, détection de fraude en temps réel.
 // Nomenclature : noms de tables en PascalCase, colonnes en snake_case.
 // Compatible : dbdiagram.io, dbml-cli (dbml2sql), DBML VS Code.
 // =====================================================================
