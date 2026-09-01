@@ -3,20 +3,11 @@
 
 # 2. OLAP Data System
 ## Annexes
-### 2.A. Kimball-based Design
+### 2.A. Kimball Analysis
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D3 : OLAP - Annexe A / v01 - 2026/10/13.*   
+> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D3 : OLAP - Annexe A / v08 - 2026/10/13.*   
 
 ---
-
-###### Glossaire
-
-- **SCD** = Slowly Changing Dimension. 
-	- C'est un concept central de la méthode *Kimball*. Il répond à la question : **quand un attribut d'une dimension change dans le monde réel (un marchand change de pays, un client change de statut), que fait-on dans l'entrepôt ?**
-	- Types 
-		- **SCD1** : écraser sans garder de trace ; La nouvelle valeur remplace l'ancienne directement dans la ligne existante ; Pas d'historique : si on interroge le passé, on retrouvera la valeur _actuelle_, pas celle qui était vraie à l'époque.
-
-		- **SCD2** : garder toutes les versions, avec des dates de validité ; Un changement crée une nouvelle ligne dans la dimension (nouvelle clé technique), avec des colonnes `valid_from`/`valid_to` marquant la période de validité de chaque version. La ligne précédente n'est jamais modifiée ni supprimée, elle devient juste "expirée".
 
 ### 2.A.1. Méthode et périmètre
 
@@ -34,14 +25,14 @@ Le présent document couvre le processus complet pour l'ensemble des besoins ana
 
 Six processus métiers sont identifiés d'après les catégories de données analytiques du cahier des charges (DS2 : *Revenue Metrics*, *Customer Segmentation Data*, *Product Performance Metrics*, *Fraud Analysis Data*, *Compliance and Audit Logs*).
 
-| # | Processus métier | Événement déclencheur | Catégorie couverte |
-|---|---|---|---|
-| P1 | Traitement d'un paiement | Une transaction est créée | Revenue Metrics, Product Performance, Customer Segmentation |
-| P2 | Évaluation du risque de fraude | Un score de fraude est calculé | Fraud Analysis Data |
-| P3 | Cycle de vie d'un abonnement | Un abonnement atteint une échéance | Revenue Metrics (récurrent) |
-| P4 | Accès et modification de données | Une consultation ou une modification est journalisée | Compliance and Audit Logs |
-| P5 | Traitement d'une demande de droit | Un client exerce un droit RGPD/CCPA | Compliance and Audit Logs |
-| P6 | Traitement d'un incident de sécurité | Un incident est détecté | Compliance and Audit Logs |
+| #   | Processus métier                     | Événement déclencheur                                | Catégorie couverte                                          |
+| --- | ------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------- |
+| P1  | Traitement d'un paiement             | Une transaction est créée                            | Revenue Metrics, Product Performance, Customer Segmentation |
+| P2  | Évaluation du risque de fraude       | Un score de fraude est calculé                       | Fraud Analysis Data                                         |
+| P3  | Cycle de vie d'un abonnement         | Un abonnement atteint une échéance                   | Revenue Metrics (récurrent)                                 |
+| P4  | Accès et modification de données     | Une consultation ou une modification est journalisée | Compliance and Audit Logs                                   |
+| P5  | Traitement d'une demande de droit    | Un client exerce un droit RGPD/CCPA                  | Compliance and Audit Logs                                   |
+| P6  | Traitement d'un incident de sécurité | Un incident est détecté                              | Compliance and Audit Logs                                   |
 
 **Problématiques volontairement exclues** : les remboursements (Refund) et rétro-facturations (ChargeBack) ne constituent pas des processus séparés. Ce sont des *attributs de l'issue* d'une transaction (P1), et non des événements analytiques autonomes (cf. BR2).
 
@@ -135,5 +126,7 @@ Chaque case cochée est une dimension conformée, réutilisable telle quelle d'u
 
 `DimDate` et `DimMerchant` traversent les six processus. C'est ce qui permettra, par exemple, de croiser revenu et incidents de sécurité par marchand et par mois sans jointure artificielle entre deux entrepôts séparés.
 
-### 2.A.7. Point d'attention : la conversion de devise
+### 2.A.7. Conversion de devise
 `DimReferenceExchangeRate` porte un taux de conversion **figé par année** (différent a priori du taux du jour) pour que deux montants convertis à des dates différentes restent comparables entre eux. 
+
+---

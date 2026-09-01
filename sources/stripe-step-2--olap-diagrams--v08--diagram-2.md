@@ -2,6 +2,7 @@
 erDiagram
     FACT_FRAUD_EVENT {
         fraud_event_sk bigint PK
+        transaction_id uuid
         date_key int FK
         merchant_key int FK
         customer_key int FK

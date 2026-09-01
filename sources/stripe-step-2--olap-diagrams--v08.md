@@ -4,7 +4,7 @@
 # 2. OLAP Data System
 ## D3. OLAP Design Diagrams
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D3 : OLAP Design Diagrams / v07 - 2026/10/13.*
+> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D3 : OLAP Design Diagrams / v08 - 2026/10/13.*
 
 ---
 
@@ -27,31 +27,30 @@ Les diagrammes ci-dessous représentent le schéma en étoile de chaque processu
 
 <div style="page-break-after: always;"></div>
 
-#### D3.3.1. Revenus (P1)
+#### D3.3.1. Revenus (P1/FactTransaction)
 
-![[stripe-step-2--olap-diagrams--v07--diagram-1.svg]]
+![[stripe-step-2--olap-diagrams--v08--diagram-1.svg]]
 
 Grain : une transaction. Les propriétés `merchant_net_revenue_eur` et `stripe_revenue_eur` cohabitent sur la même ligne. Les deux audiences du reporting (marchands & Stripe) lisent la même table, seule la colonne agrégée change (voir note du DBML).
 
 <div style="page-break-after: always;"></div>
 
-#### D3.3.2. Abonnements (P3) & Fraudes (P2)
+#### D3.3.2. Fraudes (P2/FactFraudEvent) & Abonnements (P3/FactSubscriptionSnapshot)
 
-![[stripe-step-2--olap-diagrams--v07--diagram-2.svg]]
+![[stripe-step-2--olap-diagrams--v08--diagram-2.svg]]
 
 Deux grains différents dans la même étoile fonctionnelle : `FactFraudEvent` (un événement
 d'évaluation) et `FactSubscriptionSnapshot` (un instantané d'abonnement capturé périodiquement). Les tables ne partagent aucune ligne, seulement des dimensions conformées.
 
 <div style="page-break-after: always;"></div>
 
-#### D3.3.3. Sécurité & Conformité (P4, P5, P6)
+#### D3.3.3. Conformité &  Sécurité (P4/FactAuditEvent, P5/FactDataSubjectRequest, P6/FactSecurityIncident)
 
-![[stripe-step-2--olap-diagrams--v07--diagram-3.svg]]
+![[stripe-step-2--olap-diagrams--v08--diagram-3.svg]]
 
 `FactDataSubjectRequest` et `FactSecurityIncident` référencent `DimDate` trois fois chacune
 (réception/traitement, détection/notification/résolution). C'est la signature typique d'un instantané
 cumulatif *Kimball* : plusieurs jalons temporels sur une même ligne, mise à jour au fur et à mesure du processus, au lieu de créer une nouvelle ligne par événement.
-
 <div style="page-break-after: always;"></div>
 
 ### D3.4. Stratégie d'agrégation
@@ -113,14 +112,12 @@ et `(merchant_key, date_key)` systématiques sur les faits, complétés par les 
 (`transaction_id`, `subscription_id`...) pour le dédoublonnage à l'ETL et le rapprochement
 avec l'OLTP.
 
-### D3.6. Traçabilité vers le cahier des charges
+### D3.6. Couverture des exigences
 
-| Exigence | Couverture |
-|---|---|
-| **T2** - schéma étoile/flocon, agrégations, requêtes complexes | Étoile par processus (D3.3), agrégats dédiés (D3.4) |
-| **TR1** - normalisation OLTP / performance OLAP | Dénormalisation assumée, justifiée section D3.2 |
-| **TR3** - scalabilité, indexation, partitionnement | Partitionnement par `date_key`, index ciblés (D3.5) |
-| **BR2** - analyse de revenu, segmentation, conformité | Six étoiles couvrant chacun des besoins (D3.3) |
-| **D8** - requêtes de revenu, fraude, segmentation | Directement exécutables sur ce schéma (aucune jointure OLTP nécessaire) |
+| Exigence                                              | Couverture                                                              |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| **TR1** - normalisation OLTP / performance OLAP       | Dénormalisation assumée, justifiée section D3.2                         |
+| **TR3** - scalabilité, indexation, partitionnement    | Partitionnement par `date_key`, index ciblés (D3.5)                     |
+| **BR2** - analyse de revenu, segmentation, conformité | Six étoiles couvrant chacun des besoins (D3.3)                          |
 
 ---

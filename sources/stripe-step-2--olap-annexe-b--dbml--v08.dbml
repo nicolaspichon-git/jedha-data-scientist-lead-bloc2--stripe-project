@@ -1,6 +1,6 @@
 // =====================================================================
 // Stripe - OLAP Physical Data Model
-// Version : v07
+// Version : v08
 // Format : DBML (Database Markup Language) - https://dbml.dbdiagram.io
 // Cas d'usage métier : NoSQL / Stripe Business Case
 // Objectif : schéma en étoile, dénormalisé, optimisé pour les requêtes d'agrégation, l'analyse de séries temporelles et le reporting.
@@ -12,11 +12,11 @@
 Project StripeAnalyticsSystem {
   database_type: "PostgreSQL"
   Note: '''
-    Entrepôt de données Stripe (schéma en étoile).
+    Base des données analytiques Stripe (schéma en étoile).
 
     Principes de conception :
     - Dénormalisation assumée : minimiser les jointures, exploiter la redondance.
-    - Clés de substitution entières (au lieu de UUID) : compactes, rapides, requises pour le suivi historique SCD Type 2.
+    - Clés de substitution entières : compactes, rapides, requises pour le suivi historique SCD Type 2.
     - Grain aussi fin que possible dans les faits.
     - Stockage colonne recommandé (Redshift / BigQuery / Snowflake / ClickHouse) + partitionnement par date_key.
     - SECURITE ET CONFORMITÉ : FactAuditEvent, FactDataSubjectRequest et FactSecurityIncident alimentent le reporting réglementaire automatisé (RGPD, PCI-DSS, CCPA).
@@ -71,15 +71,14 @@ Table DimDate {
 
   Note: '''
     Dimension calendrier pré-calculée.
-    Évite les fonctions de date coûteuses dans les WHERE
-    (qui bloquent l'élagage de partitions) et permet les
-    comparaisons période sur période.
+    Évite les fonctions de date coûteuses dans les WHERE (qui bloquent l'élagage de partitions)
+    Permet les comparaisons période sur période.
   '''
 }
 
 Table DimMerchant {
-  merchant_key int [pk, increment, note: "Clé de substitution : permet le versionnement SCD Type 2"]
-  merchant_id uuid [not null, note: "Clé métier issue de l'OLTP (traçabilité)"]
+  merchant_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
+  merchant_id uuid [not null, note: "Identifiant du marchand dans la base transactionnelle"]
   legal_name varchar(255) [not null]
   industry varchar(100)
   country_code varchar(2)
@@ -93,16 +92,15 @@ Table DimMerchant {
     (merchant_id, is_current)
   }
   Note: '''
-    SCD Type 2 : un changement d'attribut clôt la ligne existante et
-    en crée une nouvelle. merchant_id n'est donc plus unique - d'où
-    la nécessité d'une clé de substitution. Une transaction reste
-    rattachée à la version du marchand en vigueur à sa date.
+    SCD Type 2 (Slowly Changing Dimension Type 2) : un changement de valeur ferme la ligne existante et en crée une nouvelle. 
+    merchant_id n'est donc plus unique - d'où la nécessité d'une clé de substitution. 
+    Une transaction reste rattachée à la version du marchand en vigueur à sa date.
   '''
 }
 
 Table DimCustomer {
-  customer_key int [pk, increment]
-  customer_id uuid [not null, note: "Clé métier issue de l'OLTP"]
+  customer_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
+  customer_id uuid [not null, note: "Identifiant du client dans la base transactionnelle"]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   segment varchar(50) [note: "nouveau | régulier | VIP | dormant"]
   lifecycle_stage varchar(50) [note: "acquisition | rétention | churn"]
@@ -117,11 +115,11 @@ Table DimCustomer {
     (customer_id, is_current)
     merchant_key
   }
-  Note: "SCD Type 2. Cloisonnement par marchand conservé depuis l'OLTP."
+  Note: "SCD Type 2. "
 }
 
 Table DimProduct {
-  product_key int [pk, increment]
+  product_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   product_id uuid [not null]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   name varchar(255) [not null]
@@ -132,20 +130,20 @@ Table DimProduct {
   Indexes {
     product_id
   }
-  Note: "Catalogue produits aplati pour l'analyse de performance produit."
+  Note: "SCD Type 2. Catalogue produits aplati (pour l'analyse des performances des produits)."
 }
 
 Table DimPaymentMethod {
-  payment_method_key int [pk, increment]
+  payment_method_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   type varchar(20) [not null, note: "card | bank_transfer | wallet"]
   card_brand varchar(20) [note: "visa | mastercard | amex | null"]
 
-  Note: "Dimension de faible cardinalité. Aucune donnée de carte sensible."
+  Note: "SCD Type 2. Dimension de faible cardinalité. Aucune donnée de carte sensible."
 }
 
 Table DimCurrency {
   currency_key int [pk, increment]
-  currency_code varchar(3) [not null, note: "Code ISO 4217"]
+  currency_code varchar(3) [not null, note: "Code ISO 4217 (issu de la base transactionnelle)"]
   name varchar(50) [not null]
   decimals smallint [not null, default: 2, note: "Décimales ISO 4217 (JPY=0, BHD=3)"]
   is_reference_currency boolean [not null, default: false, note: "Vrai pour EUR uniquement"]
@@ -153,11 +151,11 @@ Table DimCurrency {
   Indexes {
     currency_code [unique]
   }
-  Note: "Référentiel des devises. EUR est la devise de référence de l'entrepôt."
+  Note: "SCD Type 2. Référentiel des devises. EURO est la devise de référence de l'entrepôt."
 }
 
 Table DimPricingPlan {
-  pricing_plan_key int [pk, increment, note: "Clé de substitution : permet le versionnement SCD Type 2"]
+  pricing_plan_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   pricing_plan_id uuid [not null, note: "Clé métier issue de l'OLTP"]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   commission_rate decimal(5,4) [not null]
@@ -181,7 +179,7 @@ Table DimPricingPlan {
 }
 
 Table DimFraudRiskLevel {
-  risk_level_key int [pk, increment]
+  risk_level_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   risk_level_code varchar(10) [not null, note: "low | medium | high"]
   label varchar(50) [not null]
   requires_manual_review boolean [not null, default: false]
@@ -199,7 +197,7 @@ Table DimFraudRiskLevel {
 }
 
 Table DimSubscriptionStatus {
-  subscription_status_key int [pk, increment]
+  subscription_status_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   status_code varchar(20) [not null, note: "active | past_due | canceled | ..."]
   label varchar(100) [not null]
   is_billable boolean [not null, default: false]
@@ -215,7 +213,7 @@ Table DimSubscriptionStatus {
 }
 
 Table DimRegulation {
-  regulation_key int [pk, increment]
+  regulation_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   regulation_code varchar(20) [not null, note: "GDPR | CCPA"]
   label varchar(100) [not null]
   response_deadline_days smallint [not null]
@@ -224,16 +222,12 @@ Table DimRegulation {
     regulation_code [unique]
   }
   Note: '''
-    Ajoutée en v7 - remplace le varchar regulation brut du v6.
-    response_deadline_days permet de calculer is_within_deadline
-    par simple comparaison de dates plutôt que par une règle codée
-    en dur applicative - même principe que ChargebackReasonCode
-    côté OLTP.
+    response_deadline_days permet de calculer is_within_deadline par simple comparaison de dates.
   '''
 }
 
 Table DimRequestStatus {
-  request_status_key int [pk, increment]
+  request_status_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   status_code varchar(20) [not null, note: "received | in_progress | fulfilled | rejected"]
   label varchar(100) [not null]
   is_terminal boolean [not null, default: false]
@@ -245,7 +239,7 @@ Table DimRequestStatus {
 }
 
 Table DimIncidentStatus {
-  incident_status_key int [pk, increment]
+  incident_status_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   status_code varchar(20) [not null, note: "open | investigating | contained | closed"]
   label varchar(100) [not null]
   is_terminal boolean [not null, default: false]
@@ -257,7 +251,7 @@ Table DimIncidentStatus {
 }
 
 Table DimReferenceExchangeRate {
-  exchange_rate_key int [pk, increment]
+  exchange_rate_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   from_currency_key int [ref: > DimCurrency.currency_key, not null, note: "Devise locale de la transaction"]
   to_currency_key int [ref: > DimCurrency.currency_key, not null, note: "Devise de référence - toujours EUR"]
   from_currency_code varchar(3) [not null, note: "Dénormalisé pour éviter une jointure au reporting"]
@@ -296,7 +290,7 @@ Table DimReferenceExchangeRate {
 }
 
 Table DimGeography {
-  geography_key int [pk, increment]
+  geography_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   country_code varchar(2) [not null, note: "Code ISO 3166-1 alpha-2"]
   country_name varchar(100) [not null]
   region varchar(50) [not null]
@@ -306,14 +300,12 @@ Table DimGeography {
     (country_code, device_type)
   }
   Note: '''
-    Dimension dénormalisée (pays + région + appareil dans une seule
-    table) : choix étoile plutôt que flocon pour éviter les jointures
-    en cascade.
+    Dimension dénormalisée (pays + région + appareil dans une seule table) : le schéma en étoile évite les jointures en cascade.
   '''
 }
 
 Table DimTransactionStatus {
-  status_key int [pk, increment]
+  status_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   status_code varchar(20) [not null, note: "successful | failed | refunded | pending"]
   status_group varchar(20) [not null, note: "completed | failed | in_progress"]
   is_terminal boolean [not null, default: false]
@@ -331,7 +323,7 @@ Table DimTransactionStatus {
 }
 
 Table DimAuditAction {
-  audit_action_key int [pk, increment]
+  audit_action_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   action_code varchar(30) [not null, note: "read | create | update | delete | export | login | grant | revoke"]
   label varchar(100) [not null]
   action_group varchar(30) [not null, note: "Regroupement pré-calculé : lecture | ecriture | administration"]
@@ -344,7 +336,7 @@ Table DimAuditAction {
 }
 
 Table DimActor {
-  actor_key int [pk, increment]
+  actor_key int [pk, increment, note: "Clé de substitution SCD Type 2"]
   actor_id varchar(255) [not null, note: "Identité applicative de l'acteur"]
   actor_type varchar(20) [not null, note: "user | service | system | merchant_api"]
   is_human boolean [not null, default: false]
@@ -358,9 +350,8 @@ Table DimActor {
     (actor_id, is_current)
   }
   Note: '''
-    SCD Type 2 : conserve le rattachement d'un acteur à la date de
-    l'accès. Un employé ayant changé de service - ou parti - reste
-    correctement rattaché sur les accès passés.
+    SCD Type 2 : conserve le rattachement d'un acteur à la date de l'accès. 
+    Exemple : un employé ayant changé de service ou démissionné reste correctement rattaché sur les accès passés.
   '''
 }
 
@@ -370,8 +361,8 @@ Table DimActor {
 // =====================================================================
 
 Table FactTransaction {
-  transaction_sk bigint [pk, increment]
-  transaction_id uuid [not null, note: "Clé métier OLTP (traçabilité / dédoublonnage)"]
+  transaction_sk bigint [pk, increment, note: "Clé de substitution SCD Type 2"]
+  transaction_id uuid [not null, note: "Clé métier transactionnelle"]
   date_key int [ref: > DimDate.date_key, not null]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   customer_key int [ref: > DimCustomer.customer_key, not null]
@@ -382,11 +373,11 @@ Table FactTransaction {
   exchange_rate_key int [ref: > DimReferenceExchangeRate.exchange_rate_key, not null, note: "Traçabilité : quel taux de référence a servi à la conversion"]
   geography_key int [ref: > DimGeography.geography_key]
   status_key int [ref: > DimTransactionStatus.status_key, not null]
-  pricing_plan_key int [ref: > DimPricingPlan.pricing_plan_key, not null, note: "Ajouté en v7 - traçabilité du plan facturé, cohérent avec Transaction.pricing_plan_id côté OLTP"]
+  pricing_plan_key int [ref: > DimPricingPlan.pricing_plan_key, not null, note: "Traçabilité du plan facturé, cohérent avec Transaction.pricing_plan_id côté OLTP"]
 
-  amount decimal(18,2) [not null, note: "Montant en devise locale d'origine"]
-  amount_eur decimal(18,2) [not null, note: "amount x reference_rate - comparable entre toutes devises"]
-  fee_amount_eur decimal(18,2) [not null, default: 0, note: "Commission prélevée par Stripe, convertie au taux de référence"]
+  amount decimal(18,2) [not null, note: "Montant de la transaction en devise locale d'origine"]
+  amount_eur decimal(18,2) [not null, note: "Montant dans la devise de référence : amount x reference_rate"]
+  fee_amount_eur decimal(18,2) [not null, default: 0, note: "Commission prélevée par Stripe - dans la devise de référence"]
   stripe_revenue_eur decimal(18,2) [not null, default: 0, note: "REVENU DE STRIPE = fee_amount_eur"]
   merchant_net_revenue_eur decimal(18,2) [not null, note: "REVENU DU MARCHAND = amount_eur - fee_amount_eur - refund_amount_eur"]
   refund_amount_eur decimal(18,2) [not null, default: 0]
@@ -421,7 +412,8 @@ Table FactTransaction {
 }
 
 Table FactFraudEvent {
-  fraud_event_sk bigint [pk, increment]
+  fraud_event_sk bigint [pk, increment, note: "Clé de substitution SCD Type 2"]
+  transaction_id uuid [not null, note: "Clé métier transactionnelle (cf. FraudScore.transaction_id)"]
   date_key int [ref: > DimDate.date_key, not null]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   customer_key int [ref: > DimCustomer.customer_key]
@@ -436,17 +428,32 @@ Table FactFraudEvent {
     date_key
     (merchant_key, date_key)
     risk_level_key
+    transaction_id [unique, note: "1:1 avec Transaction côté OLTP (FraudScore)"]
   }
   Note: '''
     Grain : un événement d'évaluation de fraude. Alimente les analyses
     de risque. risk_level_key remplace le varchar risk_level du v6
     (voir DimFraudRiskLevel).
+
+	Clés primaires : ?
+	
+    Clés étrangères vers les dimensions :
+    - date_key — la date de l'évaluation. C'est un fait transactionnel classique (un seul jalon temporel), pas un instantané cumulatif comme FactSecurityIncident — l'évaluation de fraude est un événement ponctuel, elle ne traverse pas plusieurs étapes dans le temps.
+	- merchant_key — obligatoire (not null) : contrairement à SecurityIncident, une évaluation de fraude se rapporte toujours à une transaction d'un marchand précis, jamais transverse à la plateforme.
+	- customer_key — optionnelle. Une évaluation de fraude peut concerner une transaction dont le client n'est pas encore clairement identifié au moment du scoring (paiement anonyme, première transaction), d'où la nullabilité.
+	- geography_key — le pays/type d'appareil au moment de l'évaluation, utilisé dans la requête P2.3 (2.A.9) pour croiser risque et région.
+	- risk_level_key — référence DimFraudRiskLevel, qui porte requires_manual_review et blocks_transaction. C'est la colonne qui a remplacé le varchar risk_level du v6, comme la note le rappelle explicitement — exactement la même logique que DimIncidentStatus/DimRequestStatus vues plus tôt : la table de référence porte la décision, pas juste une étiquette.
+	
+	Mesures
+	- anomaly_score — le score brut produit par le modèle de scoring (D1 : FRAUD_SVC), entre 0 et 1 (decimal(5,4)). Non additif — on ne somme jamais des scores entre eux, seule la moyenne a un sens (utilisée telle quelle dans aucune requête vue jusqu'ici, mais servirait par exemple à suivre la dérive moyenne du modèle dans le temps).
+	- is_confirmed_fraud — un booléen qui répond à une question différente de risk_level_key : pas "quel risque le modèle a-t-il prédit", mais "la fraude s'est-elle réellement confirmée après coup" (typiquement via une rétrofacturation classée fraud — c'est exactement ce que compare la requête P2.2 de 2.A.9, en croisant les deux). C'est la seule colonne de la table qui vient d'un jugement a posteriori, pas du modèle lui-même au moment de l'évaluation.
+	- exposed_amount_eur — le montant en jeu, converti au taux de référence. Additif, contrairement aux deux mesures précédentes — c'est la colonne qu'on peut légitimement sommer (comme dans la requête P2.3, SUM(ffe.exposed_amount_eur)), puisqu'elle représente une vraie quantité d'argent, pas un score ou un indicateur binaire.
   '''
 }
 
 Table FactSubscriptionSnapshot {
-  snapshot_sk bigint [pk, increment]
-  subscription_id uuid [not null, note: "Clé métier OLTP"]
+  snapshot_sk bigint [pk, increment, note: "Clé de substitution SCD Type 2"]
+  subscription_id uuid [not null, note: "Clé métier transactionnelle"]
   date_key int [ref: > DimDate.date_key, not null, note: "Date de l'instantané - fin de la période de facturation en cours"]
   merchant_key int [ref: > DimMerchant.merchant_key, not null]
   customer_key int [ref: > DimCustomer.customer_key, not null]
@@ -466,40 +473,23 @@ Table FactSubscriptionSnapshot {
     subscription_id
   }
   Note: '''
-    RÉGRANULÉE EN V7 - grain différent du v6.
+    Une ligne = un abonnement, à un instant d'observation (fin de période de facturation) ; 
+    Conforme à la conception 2.A (Kimbla analysis).
+    Permet un segmentation des clients par statut d'abonnement (cf. matrice de bus 2.A.6.) et un suivi individuel du risque de désabonnement (failed_attempt_count).
 
-    v6 : une ligne = (date, marchand, produit), avec des COMPTEURS
-    agrégés (active_subscriptions, churned_count...). Impossible dans
-    ce grain de croiser avec DimCustomer ou de suivre un abonnement
-    individuel dans le temps.
+    Les compteurs agrégés sont recalculés à la demande via AggSubscriptionDailyMerchant (réponse rapide aux tableaux de bord ; 
+    cf. cohérent avec le principe "fait atomique fin + agrégats séparés" déjà appliqué à FactTransaction/ AggRevenueDailyMerchant.
 
-    v7 : une ligne = un abonnement, à un instant d'observation (fin de
-    période de facturation) - conforme à la conception 2.A.3/2.A.4.
-    Permet la segmentation client par statut d'abonnement (matrice de
-    bus 2.A.6, P3 x DimCustomer) et le suivi individuel du risque de
-    désabonnement (failed_attempt_count).
+    Snapshots périodiques : mrr_eur est un état des revenus à un instant donné (et non un événement ;
+    ne pas sommer cet état sur plusieurs dates pour un même abonnement (semi-additif, additif uniquement sur les dimensions autres que le temps).
 
-    Les compteurs agrégés du v6 ne disparaissent pas : ils sont
-    recalculés à la demande via AggSubscriptionDailyMerchant (nouvelle
-    table, voir section agrégats), qui reste la réponse rapide aux
-    tableaux de bord - cohérent avec le principe "fait atomique fin +
-    agrégats séparés" déjà appliqué à FactTransaction/
-    AggRevenueDailyMerchant.
-
-    Fait de type SNAPSHOT PÉRIODIQUE : mrr_eur est un état à un instant
-    donné, pas un événement - ne jamais le sommer sur plusieurs dates
-    pour un même abonnement (semi-additif, additif uniquement sur les
-    dimensions autres que le temps).
-
-    Le taux de référence figé reste ici déterminant : sans lui, une
-    simple fluctuation de change ferait varier le MRR d'un abonnement
-    sans qu'aucune de ses caractéristiques n'ait changé.
+    Le taux de référence fixe permet de fixer l'état MMR (Monthly Recurrent Revenue) d'un abonnement indépendemment des fluctuations du taux de change de la monnaie de référence (par rapport à la monnaie de transaction).
   '''
 }
 
 
 Table FactAuditEvent {
-  audit_event_sk bigint [pk, increment]
+  audit_event_sk bigint [pk, increment, note: "Clé de substitution SCD Type 2"]
   date_key int [ref: > DimDate.date_key, not null]
   audit_action_key int [ref: > DimAuditAction.audit_action_key, not null]
   actor_key int [ref: > DimActor.actor_key, not null]
@@ -539,8 +529,8 @@ Table FactDataSubjectRequest {
   request_status_key int [ref: > DimRequestStatus.request_status_key, not null]
 
   request_type varchar(30) [not null, note: "access | rectification | erasure | portability | objection"]
-  processing_days int [note: "Écart réception / traitement, en jours"]
-  is_within_deadline boolean [note: "Délai légal respecté - indicateur audité, dérivable de Regulation.response_deadline_days"]
+  processing_days int [note: "Écart entre réception et traitement, en jours"]
+  is_within_deadline boolean [note: "Délai légal respecté, dérivable de Regulation.response_deadline_days"]
 
   Indexes {
     received_date_key
@@ -549,33 +539,24 @@ Table FactDataSubjectRequest {
     is_within_deadline
   }
   Note: '''
-    Renommée depuis FactComplianceRequest (v6) en v7, pour désambiguïser
-    avec FactSecurityIncident (nouvelle en v7) - "conformité" désignait
-    jusqu'ici uniquement les demandes de droits, un nom plus précis
-    s'imposait avec l'ajout d'un second fait de conformité.
-
-    regulation_key et request_status_key remplacent les varchar bruts
-    du v6 (voir DimRegulation, DimRequestStatus).
-
     Grain : une demande d'exercice de droits (instantané cumulatif).
     is_within_deadline est l'indicateur central du rapport RGPD/CCPA.
   '''
 }
 
 Table FactSecurityIncident {
-  incident_sk bigint [pk, increment]
+  incident_sk bigint [pk, increment, npte: "Clé de substitution SCD Type 2"]
   incident_id uuid [not null, note: "Clé métier OLTP"]
   detected_date_key int [ref: > DimDate.date_key, not null]
   notified_date_key int [ref: > DimDate.date_key, note: "Null si notification non requise ou non encore faite"]
   resolved_date_key int [ref: > DimDate.date_key, note: "Null si incident non clos"]
   merchant_key int [ref: > DimMerchant.merchant_key, note: "Null si incident transverse à la plateforme"]
   incident_status_key int [ref: > DimIncidentStatus.incident_status_key, not null]
-
   incident_type varchar(50) [not null, note: "unauthorized_access | data_breach | anomalous_activity | failed_auth_burst"]
   severity varchar(20) [not null, note: "low | medium | high | critical"]
   affected_record_count int
-  detection_to_notification_hours decimal(10,2) [note: "Écart detected_at / notified_at, en heures"]
-  is_within_72h_deadline boolean [note: "Point de contrôle direct du délai RGPD de notification"]
+  detection_to_notification_hours decimal(10,2) [note: "Écart entre détection et notification, en heures"]
+  is_within_72h_deadline boolean [note: "Point de contrôle direct du délai de notification RGPD (72H)"]
 
   Indexes {
     detected_date_key
@@ -584,18 +565,15 @@ Table FactSecurityIncident {
     is_within_72h_deadline
   }
   Note: '''
-    NOUVELLE EN V7 - absente du v6, alors que P6 (incidents de sécurité)
-    fait partie des six processus métiers identifiés en conception
-    (2.A.2). Complète le volet conformité aux côtés de FactAuditEvent
-    (accès/modifications) et FactDataSubjectRequest (droits).
-
+    Complète le volet conformité dans le processus métier P6 (incidents de sécurité),
+    aux côtés de FactAuditEvent (accès/modifications) et FactDataSubjectRequest (droits).
+    
     Grain : un incident de sécurité (instantané cumulatif, même famille
     que FactDataSubjectRequest) - une ligne mise à jour au fil des
     jalons detected_at -> notified_at -> resolved_at.
 
-    is_within_72h_deadline matérialise le délai légal RGPD de
-    notification (72h après détection) - même logique que
-    is_within_deadline sur FactDataSubjectRequest.
+    is_within_72h_deadline matérialise le délai légal RGPD de notification (72h après détection) ;
+    même logique que is_within_deadline / FactDataSubjectRequest.
   '''
 }
 
@@ -618,7 +596,19 @@ Table AggRevenueDailyMerchant {
   Indexes {
     (date_key, merchant_key) [pk]
   }
-  Note: "CA quotidien par marchand. Couvre l'essentiel des requêtes de dashboard."
+  Note: '''
+    Indicateurs de revenus quotidiens des marchands. Couvre l'essentiel des requêtes de dashboard.
+    
+    Clé : (date_key, merchant_key).
+
+    Indicateurs : 
+      - transaction_count : le nombre de transactions du jour concernant le marchand (cf. FactTransaction).
+      - gross_volume_eur : le chiffre d'affaire (volume brut encaissé) du marchand et du jour. 
+      - merchant_net_revenue_eur : le revenu net du marchand et du jour (cf. FactTransaction).
+      - stripe_revenue_eur : la somme des commissions prélevées par Stripe sur les transactions concernant ce marchand à ce jour (cf. FactTransaction).
+      - refund_total_eur : la somme des remboursements du jour, l'équivalent agrégé de refund_amount_eur sur le fait atomique.
+      - avg_ticket_eur : le panier moyen (gross_volume_eur / transaction_count) pour ce marchand et ce jour. 
+  '''
 }
 
 Table AggRevenueMonthlyMerchantCountry {
@@ -634,8 +624,9 @@ Table AggRevenueMonthlyMerchantCountry {
     (year, month, merchant_key, country_code) [pk]
   }
   Note: '''
-    Revenus mensuels par marchand et pays. Reporting géographique.
-    Comparabilité inter-pays garantie par le taux de référence figé.
+    Indicateurs de revenus mensuels des marchands en fonction des pays. 
+    Comparabilité inter-pays garantie par le taux de référence fixe.
+    Cf. AggRevenueDailyMerchant.
   '''
 }
 
@@ -668,8 +659,28 @@ Table AggComplianceDailyMerchant {
   }
   Note: '''
     Indicateurs d'accès quotidiens par marchand.
-    Alimente le rapport de conformité automatisé et l'alerting sur
-    les tentatives non autorisées.
+    Alimente le rapport de conformité automatisé et l'alerting sur les tentatives non autorisées.
+
+    Clé : (date_key, merchant_key)
+
+  Indicateurs :
+  - total_access_count : le nombre d'accès aux données de ce marchand à ce jour - tous types d'accès confondus. 
+  - sensitive_access_count : le nombre d'accès _sensibles_ (directement dérivé de l'attribut transactionnel AuditAction.is_sensitive).
+  - unauthorized_attempt_count : le nombre de tentatives où was_authorized = false côté DataAccessLog : des accès refusés, pas des accès réussis. 
+    Alimente directement la règle d'alerte du plan de sécurité (cf. D6: "plus de 3 accès N/A en 10 minutes par le même acteur").
+  - distinct_actor_count : le nombre d'acteurs différents ayant accédé aux données de ce marchand ce jour-là. 
+    Indicateur de la surface d'exposition du marchand : un marchand consulté par 2 agents de support chaque jour n'a pas le même profil de risque qu'un marchand consulté par 40.
+  - export_count : le nombre d'exportations de données effectués (AuditAction.action_code = 'export').
+
+  Accès Sensible : 
+  Accès dont le type d'action lui-même a été explicitement marqué comme méritant une vigilance renforcée dans la table de référence AuditAction (cf. modèle OLTP). 
+  L'attribut AuditAction.is_sensitive distingue des actions comme export ou delete (potentiellement dommageables, difficiles à annuler)  d'actions comme une simple routine de lecture. 
+  Un accès sensible est presque toujours un accès (sur les données ransactionnelles) qui a exigé un motif renseigné avant d'être exécuté.
+  
+  Exportations : 
+  Une exportation de données (typiquement, l'exportation d'un jeu de données entier vers un fichier csv/excel ) est le type d'accès le plus critique du point de vue de la fuite de données.
+  Cette action est notée explicitement dans le modèle transactionnel comme "point de contrôle sensible", 
+  c'est-à-dire assez importante pour être suivie individuellement, notamment parce qu'un pic soudain d'exportations est le signal d'alerte le plus révélateur d'une fuite de données en cours.
   '''
 }
 
@@ -710,7 +721,11 @@ Table AggDataSubjectRequestMonthly {
   Indexes {
     (year, month, merchant_key, regulation, request_type) [pk]
   }
-  Note: "Synthèse mensuelle des demandes de droits. Sortie directe du rapport de conformité. Source : FactDataSubjectRequest (renommée en v7)."
+  Note: '''
+    Synthèse mensuelle des demandes de droits. 
+    Sortie directe du rapport de conformité. 
+    Source : FactDataSubjectRequest.
+  '''
 }
 
 Table AggSecurityIncidentMonthly {

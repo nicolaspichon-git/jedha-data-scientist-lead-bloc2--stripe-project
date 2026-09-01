@@ -248,10 +248,3 @@ Les entités `ACCESS`, `CHANGE` et `SECURITY_INCIDENT` portent ce lien explicite
 
 ---
 
-#### Glossaire
-
-- MCD (CDM) = Modèle Conceptuel de Données (Conceptual Data Model)
-- MLD (LDM) = Modèle Logique de Données (Logical Data Model)
-- MPD (PDM) = Modèle Physique de Données (Physical Data Model)
-- DEA (ERD) = Diagramme Entités-Associations (Entity-Relationship Diagram)
-- KYB (KYC) = Know Your Business (Know Your Customer)
