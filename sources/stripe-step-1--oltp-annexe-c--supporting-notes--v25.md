@@ -5,7 +5,7 @@
 ## Annexes
 ### 1.C. OLTP Supporting Notes
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D2 : OLTP - Annexe C  / v25 - 2026/10/13.*   
+> *Nicolas Pichon - AIA RNCP 38777 / BC02 / OLTP Data System - Annexe C  / v25 - 2026/10/13.*   
 
 ---
 

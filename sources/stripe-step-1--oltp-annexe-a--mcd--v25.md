@@ -5,7 +5,7 @@
 ## Annexes
 ### 1.A. OLTP Conceptual Data Model (CDM)
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D2 : OLTP - Annexe A / v25 - 2026/10/13.*   
+> *Nicolas Pichon - AIA RNCP 38777 / BC02 / OLTP Data System - Annexe A / v25 - 2026/10/13.*   
 
 ---
 
