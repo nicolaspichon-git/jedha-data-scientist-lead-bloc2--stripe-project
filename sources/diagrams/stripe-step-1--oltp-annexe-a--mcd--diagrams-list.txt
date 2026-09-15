@@ -1,0 +1,2 @@
+stripe-step-1--oltp-annexe-a--mcd--diagram-1--v25.md
+stripe-step-1--oltp-annexe-a--mcd--diagram-2--v25.md
