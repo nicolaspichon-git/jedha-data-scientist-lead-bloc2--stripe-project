@@ -1,0 +1,108 @@
+---
+tags:
+  - _RNCP38777
+  - _2026
+  - aia
+  - aia/bc02
+  - stripe-project
+  - stripe-project/step-8
+---
+> OLTP : v30 (2026/09/21).
+---
+
+```mermaid
+flowchart TB
+  PAYS[["COUNTRY"]]
+  DEVISE[["CURRENCY"]]
+  MARCHAND[["MERCHANT"]]
+  CLIENT[["CUSTOMER"]]
+  MOYEN[["PAYMENT_METHOD"]]
+  PRODUIT[["PRODUCT"]]
+  TRANSACTION[["TRANSACTION"]]
+  PLAN[["PRICING_PLAN"]]
+  REMBOURSEMENT[["REFUND"]]
+  LITIGE[["CHARGEBACK"]]
+
+  SITUER{IsLocatedIn}
+  RESIDER{ResidesIn}
+  POSSEDER{Owns}
+  CATALOGUER{Catalogs}
+  TARIFER{IsPricedIn}
+  ENREGISTRER{Registers}
+  
+  SOUSCRIRE{"Subscribes"}
+  
+  AUTORISER{Authorizes}
+  DENOMINATEDIN{IsDenominatedIn}
+  BENEFICIER{BenefitsFrom}
+  QUOTEDIN{"IsQuotedIn"}
+  RECEVOIR{Receives}
+  CONCERNER{Bears}
+  UTILISER{IsUsedIn}
+  REGLER{IsSettledIn}
+  FACTURER{IsRatedUnder}
+  GENERER{Generates}
+  ACHETER{Purchases}
+
+  REMBOURSER{Triggers}
+  CONTESTER{Disputes}
+
+  MARCHAND ---|"1,1"| SITUER
+  SITUER ---|"0,n"| PAYS
+
+  MARCHAND ---|"0,n"| POSSEDER
+  POSSEDER ---|"1,1"| CLIENT
+  CLIENT ---|"0,1"| RESIDER
+  RESIDER ---|"0,n"| PAYS
+  
+  
+  MARCHAND ---|"0,n"| CATALOGUER
+  CATALOGUER ---|"1,1"| PRODUIT
+  PRODUIT ---|"1,1"| TARIFER
+  TARIFER ---|"0,n"| DEVISE
+  
+  MARCHAND ---|"0,n"| BENEFICIER
+  BENEFICIER ---|"1,1"| PLAN
+
+  PLAN ---|"0,n"| QUOTEDIN
+  QUOTEDIN ---|"0,n"| DEVISE
+
+  MARCHAND ---|"0,n"| RECEVOIR
+  RECEVOIR ---|"1,1"| TRANSACTION
+  
+  CLIENT ---|"1,n"| ENREGISTRER
+  ENREGISTRER ---|"1,1"| MOYEN
+
+  CLIENT ---|"0,n"| SOUSCRIRE
+  SOUSCRIRE ---|"0,n"| PRODUIT
+  
+  SOUSCRIRE ---|"1,1"| AUTORISER
+  AUTORISER ---|"0,n"| MOYEN
+  
+  SOUSCRIRE ---|"1,1"| DENOMINATEDIN
+  DENOMINATEDIN ---|"0,n"| DEVISE
+
+  SOUSCRIRE ---|"0,n"| GENERER
+  GENERER ---|"0,1"| TRANSACTION
+  
+  CLIENT ---|"0,n"| CONCERNER
+  CONCERNER ---|"1,1"| TRANSACTION
+  
+  MOYEN ---|"0,n"| UTILISER
+  UTILISER ---|"1,1"| TRANSACTION
+  
+  TRANSACTION ---|"1,1"| REGLER
+  REGLER ---|"0,n"| DEVISE
+  
+  TRANSACTION ---|"1,1"| FACTURER
+  FACTURER ---|"0,n"| PLAN
+
+  TRANSACTION ---|"0,1"| ACHETER
+  ACHETER ---|"0,n"| PRODUIT
+
+  TRANSACTION ---|"0,1"| REMBOURSER
+  REMBOURSER ---|"1,1"| REMBOURSEMENT
+  
+  TRANSACTION ---|"0,1"| CONTESTER
+  CONTESTER ---|"1,1"| LITIGE
+```
