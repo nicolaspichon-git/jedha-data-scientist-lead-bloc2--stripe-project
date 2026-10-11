@@ -1,0 +1,3 @@
+stripe-step-6--ml-integration-strategy--diagram-1--v08.md
+stripe-step-6--ml-integration-strategy--diagram-2-1.md
+stripe-step-6--ml-integration-strategy--diagram-2-2.md
