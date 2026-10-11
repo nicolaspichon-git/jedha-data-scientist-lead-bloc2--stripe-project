@@ -1,0 +1,2 @@
+stripe-step-4--data-pipeline-architecture--diagram-1-1--core--v09.md
+stripe-step-4--data-pipeline-architecture--diagram-1-3--security-and-compliance--v09.md
