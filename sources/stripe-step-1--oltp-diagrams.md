@@ -189,19 +189,19 @@ Les tables dédiées aux questions de *sécurité* et de *conformité* forment l
 
 <div style="page-break-after: always;"></div>
 
-### Couverture des exigences
+### Couverture des exigences [TODO : A REVOIR]
 
-| #       | Exigence                                                       | Couverture     | Source                                                                               |
-| ------- | -------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| BR1     | OLTP = grands volumes de transactions + latence minimale       | 🟢             | Indexation `Transaction` (\[D2-B\]), découplage des entités dépendantes (\[D2-B\])   |
-| BR1     | OLTP = ACID + distributed environment + sync. temps réel       | --             | --                                                                                   |
-| BR1     | OLTP Disaster recovery                                         | 🟢             | Disaster Recovery/Replication/Failover (\[D2-D\])                                    |
-| BR2     | analyse de revenu                                              | 🟢             | `PricingPlan`/`PricingPlanFee`/`Transaction.fee_amount` (§1.C.2)                     |
-| BR4     | flux cohérent OLTP ↔ OLAP ↔ NoSQL                              | 🟢 (part OLTP) | *CDC* via `ChangeAuditLog` ; écriture asynchrone hors du chemin d'exécution critique |
-| BR5/TR5 | chiffrement, accès, audit, RGPD/PCI-DSS                        | 🟢             | audit & RGPD/PCI-DSS --> Tables conformité (§1.C.3)                                  |
-| TR1     | schéma normalisé, intégrité, performance                       | 🟢             | 3NF, tables de référence porteuses de logique métier, index ciblés                   |
-| TR3     | scalabilité horizontale, indexation, partitionnement, sharding | 🟢             | Index existants ; stratégie de partitionnement/sharding formalisée au §1.D           |
-| TR4     | cohérence et synchronisation (CDC)                             | 🟢             | `ChangeAuditLog`, réplication logique (cf. §1.D)                                     |
+| #       | Exigence                                                       | Couverture     | Source                                                                                        |
+| ------- | -------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| BR1     | OLTP = grands volumes de transactions + latence minimale       | 🟢             | Indexation `Transaction` (\[D2-B\]), découplage des entités dépendantes (\[D2-B\])            |
+| BR1     | OLTP = ACID + distributed environment + sync. temps réel       | --             | --                                                                                            |
+| BR1     | OLTP Disaster recovery                                         | 🟢             | Disaster Recovery/Replication/Failover (\[D2-D\])                                             |
+| BR2     | analyse de revenu                                              | 🟢             | `PricingPlan`/`PricingPlanFee`/`Transaction.fee_amount` (§1.C.2)                              |
+| BR4     | flux cohérent OLTP ↔ OLAP ↔ NoSQL                              | 🟢 (part OLTP) | *CDC* via `ChangeAuditLog` ; écriture asynchrone hors du chemin d'exécution critique          |
+| BR5/TR5 | chiffrement, accès, audit, RGPD/PCI-DSS                        | 🟢             | audit & RGPD/PCI-DSS --> Tables conformité (§1.C.3)                                           |
+| TR1     | schéma normalisé, intégrité, performance                       | 🟢             | 3NF, tables de référence porteuses de logique métier, index ciblés                            |
+| TR3     | scalabilité horizontale, indexation, partitionnement, sharding | 🟢             | Index existants ; ~~stratégie de partitionnement~~ ; stratégie de sharding formalisée au §1.D |
+| TR4     | cohérence et synchronisation (CDC)                             | 🟢             | `ChangeAuditLog`, réplication logique (cf. §1.D)                                              |
 
 ###### Couverture du  modèle
 Le choix précis de l'outillage *managé* (*RDS Multi-AZ*, *Cloud SQL*, *Aurora*...) est hors périmètre. C'est une décision d'infrastructure/déploiement.
@@ -210,11 +210,12 @@ Le choix précis de l'outillage *managé* (*RDS Multi-AZ*, *Cloud SQL*, *Aurora*
 
 ### Références
 
+[TODO : remplacer référence R0 par D0 (et mettre R0 dans D0)]
 #### Ressources
 - \[R0\] [Stripe Business Case](resources/stripe-project--business-case.pdf) 
 
 #### Annexes
 - \[D2-A\] [OLTP Data Conceptual Model](annexes/stripe-step-1--oltp-annexe-a--mcd.pdf)
 - \[D2-B\] [OLTP Data Physical Model](annexes/stripe-step-1--oltp-annexe-b--dbml.dbml)
-- \[D2-C\] [OLTP Supporting Notes](annexes/stripe-step-1--oltp-annexe-c--supporting-notes.pdf)
+- \[D2-C\] [OLTP Design Notes](annexes/stripe-step-1--oltp-annexe-c--design-notes.pdf)
 - \[D2-D\] [OLTP Disaster Recovery Strategy](annexes/stripe-step-1--oltp-annexe-d--disaster-recovery-strategy.pdf)
