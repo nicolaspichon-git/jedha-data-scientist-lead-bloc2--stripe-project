@@ -1,0 +1,17 @@
+stripe-step-8--data-architecture--diagram-1.md
+stripe-step-8--data-architecture--diagram-1-1--overview.md
+stripe-step-8--data-architecture--diagram-1-2--core.md
+stripe-step-8--data-architecture--diagram-1-3--scoring.md
+stripe-step-8--data-architecture--diagram-1-4--security-and-compliance.md
+stripe-step-8--data-architecture--diagram-2--scoring-sequence.md
+stripe-step-8--data-architecture--diagram-4-1--transactional-model-1.md
+stripe-step-8--data-architecture--diagram-4-2--transactional-model-2.md
+stripe-step-8--data-architecture--diagram-4-3--transactional-model-3.md
+stripe-step-8--data-architecture--diagram-5-1--analytics-model-1.md
+stripe-step-8--data-architecture--diagram-5-2--analytics-model-2.md
+stripe-step-8--data-architecture--diagram-5-3--analytics-model-3.md
+stripe-step-8--data-architecture--diagram-6-1--nosql-model-1.md
+stripe-step-8--data-architecture--diagram-6-2--nosql-model-2.md
+stripe-step-8--data-architecture--diagram-6-3--nosql-model-3.md
+stripe-step-8--data-architecture--diagram-6-4--nosql-model-4.md
+stripe-step-8--data-architecture--diagram-6-5--nosql-model-5.md
