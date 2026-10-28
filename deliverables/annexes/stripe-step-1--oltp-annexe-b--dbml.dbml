@@ -85,7 +85,10 @@ Project stripe_oltp {
     - Aucune FK en cascade (NO ACTION partout) : la rétention légale interdit de supprimer des données financières ;
       l'effacement RGPD passe par pseudonymisation/crypto-shreding ;
     - DBML ne sait pas exprimer certaines contraintes : CHECK, EXCLUDE, index partiels, triggers, privilèges ;
-    - Aucune table n'est partitionnée.
+    - Partitionnement : aucune table n'est partitionnée ;
+    - Horodatages : tous en timestamptz, stockés en UTC. Le fuseau de session du serveur et des clients doit aussi être UTC
+      (ALTER DATABASE ... SET timezone TO 'UTC') pour que CURRENT_DATE, date_trunc et les conversions de date soient reproductibles.
+      Aucun fuseau métier (marchand, client) n'est porté par le modèle : l'OLAP raisonne en dates UTC (voir D3).
   '''
 }
 
@@ -447,10 +450,10 @@ Table Transaction [headercolor: #E74C3C] {
   pricing_plan_id uuid [not null, note: "Plan tarifaire du marchand, avec frais fixe défini pour currency_code. FK composites"]
   is_merchant_initiated boolean [not null, default: false, note: "Vrai pour un prélèvement d'abonnement : aucun signal comportemental client exploitable par les modèles de fraude"]
   amount bigint [not null, note: "Montant en unités mineures de currency_code (CHECK > 0)"]
-  fee_amount bigint [not null, note: "Commission Stripe en unités mineures = ROUND(amount x commission_rate) + fixed_fee (arrondi demi-supérieur, fonction stripe_fee()). Valeur dérivée, matérialisée pour la performance - voir MCD règle #24."]
+  fee_amount bigint [not null, note: "Commission Stripe en unités mineures = ROUND(amount x commission_rate) + fixed_fee (arrondi demi-supérieur). Valeur dérivée, matérialisée pour la performance - voir MCD règle #24."]
   currency_code varchar(3) [ref: > Currency.currency_code, not null]
   status_code varchar(20) [ref: > TransactionStatus.status_code, not null]
-  ip_geolocation varchar(45) [note: "Géolocalisation basée IP (IPv4/IPv6)"]
+  ip_geolocation varchar(45) [note: "Adresse IP de l'appelant (IPv4/IPv6, 45 car. max.)"]
   device_type varchar(20) [note: "CHECK (device_type IN ('mobile','desktop','tablet')) - liste courte et figée"]
   created_at timestamptz [not null, default: `now()`]
   updated_by varchar(255) [not null, note: "Auteur de la dernière écriture (création ou changement de statut)"]
@@ -468,7 +471,7 @@ Table Transaction [headercolor: #E74C3C] {
   Note: '''
     Table centrale du modèle transactionnel. 
     
-    Auto-suffisante : montant, devise et date permettent toutes les conversions a posteriori du côté analytique.
+    Auto-suffisante au sens où montant, devise et date permettent les conversions a posteriori du côté analytique.
     
     Clé primaire (PK) = transaction_id seul (pas de partitionnement de la table (décision de conception)) ;
     Le sharding éventuel se ferait par hash(merchant_id). 

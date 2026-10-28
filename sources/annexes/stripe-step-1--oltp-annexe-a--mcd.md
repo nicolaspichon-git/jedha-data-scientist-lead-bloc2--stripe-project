@@ -60,27 +60,27 @@ Le modèle conceptuel est schématisé par les diagrammes suivants : vue du coeu
 
 Le symbole `#` marque l'identifiant.
 
-| Entité | Propriétés |
-|---|---|
-| `COUNTRY` | `#country_code`, `name`, `region` |
-| `CURRENCY` | `#currency_code`, `name`, `decimals` |
-| `MERCHANT` | `#merchant_id`, `legal_name`, `status`, `created_at` |
-| `CUSTOMER` | `#customer_id`, `email`, `created_at` |
-| `PAYMENT_METHOD` | `#payment_method_id`, `type`, `brand`, `card_last4`, `expiry`, `is_default`, `created_at` |
-| `PRODUCT` | `#product_id`, `name`, `unit_price`, `active`, `created_at` |
-| `TRANSACTION` | `#transaction_id`, `amount`, `created_at`, `status`, `ip_geolocation`, `device_type` |
-| `FRAUD_SCORE` | `#fraud_score_id`, `anomaly_score`, `risk_level`, `model_version`, `evaluated_at` |
-| `FRAUD_REVIEW` | `#review_id`, `reason`, `outcome`, `notes`, `reviewed_at` |
-| `FRAUD_DECISION` | `#decision_id`, `decision_value`, `decision_status`, `defaulted_at`, `confirmed_at` |
-| `REFUND` | `#refund_id`, `amount`, `reason`, `created_at` |
-| `CHARGEBACK` | `#chargeback_id`, `reason_code`, `status`, `created_at`, `resolved_at` |
-| `PRICING_PLAN` | `#pricing_plan_id`, `commission_rate`, `effective_from`, `effective_to` |
-| `ACTOR` | `#actor_id`, `actor_type`, `is_human` |
-| `ACCESS` | `#access_log_id`, `action_type`, `resource_type`, `resource_id`, `source_ip`, `user_agent`, `justification`, `was_authorized`, `occurred_at` |
-| `CHANGE` | `#change_log_id`, `table_name`, `record_id`, `action_type`, `changed_fields`, `occurred_at` |
-| `CONSENT` | `#consent_id`, `purpose`, `is_granted`, `legal_basis`, `source`, `recorded_at` |
-| `DATA_SUBJECT_REQUEST` | `#request_id`, `request_type`, `regulation`, `status`, `received_at`, `due_at`, `fulfilled_at`, `rejection_reason` |
-| `SECURITY_INCIDENT` | `#incident_id`, `incident_type`, `severity`, `affected_record_count`, `description`, `detected_at`, `notified_at`, `resolved_at`, `status` |
+| Entité                 | Propriétés                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `COUNTRY`              | `#country_code`, `name`, `region`                                                                                                            |
+| `CURRENCY`             | `#currency_code`, `name`, `decimals`                                                                                                         |
+| `MERCHANT`             | `#merchant_id`, `legal_name`, `status`, `created_at`                                                                                         |
+| `CUSTOMER`             | `#customer_id`, `email`, `created_at`                                                                                                        |
+| `PAYMENT_METHOD`       | `#payment_method_id`, `type`, `brand`, `card_last4`, `expiry`, `is_default`, `created_at`                                                    |
+| `PRODUCT`              | `#product_id`, `name`, `unit_price`, `active`, `created_at`                                                                                  |
+| `TRANSACTION`          | `#transaction_id`, `amount`, `created_at`, `status`, `ip_geolocation`, `device_type`                                                         |
+| `FRAUD_SCORE`          | `#fraud_score_id`, `anomaly_score`, `risk_level`, `model_version`, `evaluated_at`                                                            |
+| `FRAUD_REVIEW`         | `#review_id`, `reason`, `outcome`, `notes`, `reviewed_at`                                                                                    |
+| `FRAUD_DECISION`       | `#decision_id`, `decision_value`, `decision_status`, `defaulted_at`, `confirmed_at`                                                          |
+| `REFUND`               | `#refund_id`, `amount`, `reason`, `created_at`                                                                                               |
+| `CHARGEBACK`           | `#chargeback_id`, `reason_code`, `status`, `created_at`, `resolved_at`                                                                       |
+| `PRICING_PLAN`         | `#pricing_plan_id`, `commission_rate`, `effective_from`, `effective_to`                                                                      |
+| `ACTOR`                | `#actor_id`, `actor_type`, `is_human`                                                                                                        |
+| `ACCESS`               | `#access_log_id`, `action_type`, `resource_type`, `resource_id`, `source_ip`, `user_agent`, `justification`, `was_authorized`, `occurred_at` |
+| `CHANGE`               | `#change_log_id`, `table_name`, `record_id`, `action_type`, `changed_fields`, `occurred_at`                                                  |
+| `CONSENT`              | `#consent_id`, `purpose`, `is_granted`, `legal_basis`, `source`, `recorded_at`                                                               |
+| `DATA_SUBJECT_REQUEST` | `#request_id`, `request_type`, `regulation`, `status`, `received_at`, `due_at`, `fulfilled_at`, `rejection_reason`                           |
+| `SECURITY_INCIDENT`    | `#incident_id`, `incident_type`, `severity`, `affected_record_count`, `description`, `detected_at`, `notified_at`, `resolved_at`, `status`   |
 
 <div style="page-break-after: always;"></div>
 

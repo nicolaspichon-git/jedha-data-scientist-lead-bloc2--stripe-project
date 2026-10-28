@@ -48,7 +48,7 @@ Les autres fonctionnalités prises en compte n'interfèrent pas directement avec
 ###### Limites du modèle
 Le domaine fonctionnel du modèle de données est limité à la première phase du traitement des transactions financières (cf. \[D0, §0.4\]). La gestion des transactions avec les banques, des dépôts et des reversements aux marchands, ainsi que la plupart des produits et des services adjacents proposés par *Stripe*, sont hors du périmètre du modèle.
 
-Le modèle ne partitionne aucune table et ne prévoit pas mise en cache : ces choix, ainsi que la préparation d’un éventuel sharding par marchand, sont justifiés en \[D2-C, §1.C.4\]. Les stratégies d'indexation sont définies dans le modèle physique \[D2-B\].
+Le modèle ne partitionne aucune table et ne prévoit pas de mise en cache. Ces choix, ainsi que la préparation d’un éventuel sharding par marchand, sont justifiés en \[D2-C, §1.C.4\]. Les stratégies d'indexation sont définies dans le modèle physique \[D2-B\].
 
 ---
 
@@ -80,10 +80,6 @@ Noter que les vues suivantes reprennent les codes couleurs représentés ci-dess
 > *Légende : Une flèche du groupe A vers le groupe B signifie que _des tables de A référencent ou utilisent des tables de B_.*
 
 Noter que les vues des sections suivantes reprennent les codes couleurs représentés ci-dessus.
-
-###### Points particulier du modèle
-- *Pas de partitionnement :* les tables `Transaction`, `DataAccessLog`, `ChangeAuditLog` et `FraudScoringLog` restent des tables ordinaires, à clé primaire simple. Les tables filles ne portent donc aucune colonne de partition et leurs clés étrangères visent `transaction_id` seul.
-
 <div style="page-break-after: always;"></div>
 
 #### D2.2.2. Groupes et tables
@@ -103,6 +99,8 @@ Les tables et leurs dépendances sont détaillées dans les vues suivantes.
 > - 🔒︎︎︎ : Entité immuable (ne peut être ni modifiée ni supprimée après création) ;
 > - ✖ : ne peut pas être journalisé (dans les journaux des accès et des écritures)  ;
 
+###### Points particuliers
+- *Pas de partitionnement :* les tables `Transaction`, `DataAccessLog`, `ChangeAuditLog` et `FraudScoringLog` restent des tables ordinaires, à clé primaire *simple*. Les tables dépendantes de  `Transaction` ne portent aucune colonne de partition et leurs clés étrangères sont définies par `transaction_id` seul.
 ---
 
 <div style="page-break-after: always;"></div>
@@ -199,43 +197,45 @@ Les tables dédiées aux questions de *sécurité* et de *conformité* forment l
 
 ---
 
+<div style="page-break-after: always;"></div>
+
 ### Couverture des exigences
 
 ###### Enjeux Stratégiques
 
-| #      | Exigence                                                               | Couverture | Source                                                                                                                                                            |
-| ------ | ---------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **C1** | Charges transactionnelles :                                            | -          | -                                                                                                                                                                 |
-|        | - haute disponibilité                                                  | 🟠         | locale : réplication synchrone et bascule automatique (\[D2-D\] §1.D.2, §1.D.3) ; <br/>globale : système centralisé (N/D)                                         |
-|        | - cohérence                                                            | 🟢         | natif SGBD (ACID) ; <br/>contraintes d'intégrité (\[D2-B\])                                                                                                       |
-|        | - rapidité                                                             | 🟠         | indexation (\[D2-B\]),<br/>découplage de `Transaction` ([D2-C, §1.C.1.3]),<br/>journalisation hors chemin critique (§D2.1) ; <br/>manque partitionnement et cache |
-|        | - paiements (transactions)                                             | 🟢         | `Transaction`, `IdempotencyKey`                                                                                                                                   |
-|        | - remboursements (refunds)                                             | 🟢         | `Refund`                                                                                                                                                          |
-|        | - rétro-facturations (chargebacks)                                     | 🟢         | `Chargeback`                                                                                                                                                      |
-|        | - gestion des abonnements (subscription)                               | 🟢         | `Subscription`                                                                                                                                                    |
-|        | - systèmes évolutifs                                                   | 🟠         | montée en charge horizontale H/P ; préparation du _sharding_ par marchand (\[D2-C, §1.C.4\])                                                                      |
-|        | - systèmes capables de supporter de nouvelles fonctionnalités          | 🟢         | 3NF, tables de référence pour les énumérés, entités dépendantes découplées (\[D2-C, §1.C.1\])                                                                     |
-|        | - systèmes capables de supporter la détection de fraude en temps réel. | 🟠         | `FraudScore`, `FraudScoringLog`, `FraudReview`, `FraudDecision` ; à compléter avec le scoring en temps réel dans \[D1\]                                           |
-| **C2** | Besoins analytiques                                                    | 🔴         | H/P \[D2\]                                                                                                                                                        |
-| **C3** | Données N/S et S/S                                                     | 🔴         | H/P \[D2\]                                                                                                                                                        |
-| **C4** | Intégration OLTP/OLAP/NoSQL                                            | 🔴         | H/P \[D2\]                                                                                                                                                        |
+| #      | Exigence                                                               | C/D2 | Source                                                                                                                                                            |
+| ------ | ---------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **C1** | Charges transactionnelles :                                            | -  | -                                                                                                                                                                 |
+|        | - haute disponibilité                                                  | 🟠 | locale : réplication synchrone et bascule automatique (\[D2-D\] §1.D.2, §1.D.3) ; <br/>globale : système centralisé (N/D)                                         |
+|        | - cohérence                                                            | 🟢 | natif SGBD (ACID) ; <br/>contraintes d'intégrité (\[D2-B\])                                                                                                       |
+|        | - rapidité                                                             | 🟠  | indexation (\[D2-B\]),<br/>découplage de `Transaction` ([D2-C, §1.C.1.3]),<br/>journalisation hors chemin critique (§D2.1) ; <br/>manque partitionnement et cache |
+|        | - paiements (transactions)                                             | 🟢 | `Transaction`, `IdempotencyKey`                                                                                                                                   |
+|        | - remboursements (refunds)                                             | 🟢 | `Refund`                                                                                                                                                          |
+|        | - rétro-facturations (chargebacks)                                     | 🟢 | `Chargeback`                                                                                                                                                      |
+|        | - gestion des abonnements (subscription)                               | 🟢 | `Subscription`                                                                                                                                                    |
+|        | - systèmes évolutifs                                                   | 🟠  | montée en charge horizontale H/P ; préparation du _sharding_ par marchand (\[D2-C, §1.C.4\])                                                                      |
+|        | - systèmes capables de supporter de nouvelles fonctionnalités          | 🟢 | 3NF, tables de référence pour les énumérés, entités dépendantes découplées (\[D2-C, §1.C.1\])                                                                     |
+|        | - systèmes capables de supporter la détection de fraude en temps réel. | 🟠  | `FraudScore`, `FraudScoringLog`, `FraudReview`, `FraudDecision` ; à compléter avec le scoring en temps réel dans \[D1\]                                           |
+| **C2** | Besoins analytiques                                                    | 🔴 | H/P \[D2\]                                                                                                                                                        |
+| **C3** | Données N/S et S/S                                                     | 🔴 | H/P \[D2\]                                                                                                                                                        |
+| **C4** | Intégration OLTP/OLAP/NoSQL                                            | 🔴 | H/P \[D2\]                                                                                                                                                        |
 | **C5** | Sécurité et conformité :                                               | -          | -                                                                                                                                                                 |
 |        | - respect des réglementations                                          | -          | -                                                                                                                                                                 |
-|        | --- RGPD                                                               | 🟢         | alerting, droits de modification, découplage `Regulation`                                                                                                         |
-|        | --- CCPA                                                               | 🟠         | `Regulation` (délai de 45 j), <br/>`DataSubjectRequest` ; <br/>pas de fonction propre au CCPA                                                                     |
-|        | --- PCI-DSS                                                            | 🟢         | PAN H/S (`last4`, `token_reference`, `fingerprint`)                                                                                                               |
+|        | --- RGPD                                                               | 🟢 | alerting, droits de modification, découplage `Regulation`                                                                                                         |
+|        | --- CCPA                                                               | 🟠  | `Regulation` (délai de 45 j), <br/>`DataSubjectRequest` ; <br/>pas de fonction propre au CCPA                                                                     |
+|        | --- PCI-DSS                                                            | 🟢 | PAN H/S (`last4`, `token_reference`, `fingerprint`)                                                                                                               |
 |        | - mesures de sécurité robustes pour :                                  | -          | -                                                                                                                                                                 |
-|        | --- protéger&nbsp;les&nbsp;données&nbsp;au&nbsp;repos/en&nbsp;transit  | 🔴         | H/P \[D2\]                                                                                                                                                        |
-|        | --- gérer les contrôles d'accès                                        | 🟠         | rôles et privilèges par fonction (application, écriture des journaux, lecture seule),<br/> journaux immuables (\[D2-B\]) ;<br/>_RBAC_ applicatif H/P              |
-|        | --- surveiller l'utilisation des données                               | 🟢         | `DataAccessLog`, `SecurityIncident`, `AuditAction`, `AuditActorType`                                                                                              |
+|        | --- protéger&nbsp;les&nbsp;données&nbsp;au&nbsp;repos/en&nbsp;transit  | 🔴 | H/P \[D2\]                                                                                                                                                        |
+|        | --- gérer les contrôles d'accès                                        | 🟠  | rôles et privilèges par fonction (application, écriture des journaux, lecture seule),<br/> journaux immuables (\[D2-B\]) ;<br/>_RBAC_ applicatif H/P              |
+|        | --- surveiller l'utilisation des données                               | 🟢 | `DataAccessLog`, `SecurityIncident`, `AuditAction`, `AuditActorType`                                                                                              |
 
-> _Légende : *H/P* : Hors Périmètre, *H/S* : Hors Système, *N/A* : Non Applicable, *N/D* : Non Distribué._
+> _Légende : *C/D2* : Couverture par 2 ou annexes ; *H/P* : Hors Périmètre ; *H/S* : Hors Système, *N/A* : Non Applicable ; *N/D* : Non Distribué._
 
 <div style="page-break-after: always;"></div>
 
 ###### Exigences d'affaire
 
-| #       | Exigence                                    | Couverture | Source |
+| #       | Exigence                    | C/D2 | Source |
 | ------- | --------------------------- | ---------- | ------ |
 | **BR1** | Intégrité transactionnelle     | - | - |
 |         | - gros volumes de transactions | 🟠 | indexation de `Transaction` (\[D2-B\]) ; un seul primaire en écriture ([D2-D] §1.D.1) ; partitionnement et _sharding_ manquants  |
@@ -258,14 +258,14 @@ Les tables dédiées aux questions de *sécurité* et de *conformité* forment l
 |         | - Reporting de conformité automatisé | 🟠 | délais matérialisés (`due_at`) ; production des rapports H/P |
 |         | - Surveillance en temps réel des failles de sécurité | 🟢 | cf. couverture C5 |
 
-> _Légende : *H/P* : Hors Périmètre, *H/S* : Hors Système, *N/A* : Non Applicable, *N/D* : Non Distribué._
+> _Légende : *C/D2* : Couverture par 2 ou annexes ; *H/P* : Hors Périmètre ; *H/S* : Hors Système, *N/A* : Non Applicable ; *N/D* : Non Distribué._
 
 <div style="page-break-after: always;"></div>
 
 ###### Exigences Techniques
 
-| #             | Exigence                                                                      | Couverture | Source |
-| ------------- | ----------------------------------------------------------------------------- | ---------- | ------ |
+| #             | Exigence                                                                      | C/D2 | Source |
+| ------------- | ----------------------------------------------------------------------------- | ---- | ------ |
 | **TR1**       | Conception des modèles de données : | -   | - |
 | **TR1/OLTP**  | - schémas normalisés                                                          | 🟢 | 3NF (\[D2\], \[D2-C, §1.C.1.2\]) |
 |               | - intégrité transactionnelle                                                  | 🟢 | clés, contraintes d'intégrité, contraintes différées, journaux immuables (\[D2-B\])|

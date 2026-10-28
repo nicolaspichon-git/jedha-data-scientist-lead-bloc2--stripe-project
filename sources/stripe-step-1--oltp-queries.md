@@ -142,7 +142,8 @@ WHERE c.customer_id = :customer_id;
 
 \> *Commentaires*
 - Les instructions SQL ci-dessus s'exécutent séquentiellement dans une transaction SQL.
-- La commission *Stripe* est calculée dans la devise courante par la fonction applicative  `stripe_fee` en utilisant le plan tarifaire en vigueur à la date de la transaction. 
+- La commission *Stripe* est calculée dans la devise courante par la fonction applicative  `stripe_fee` en utilisant le plan tarifaire en vigueur à la date de la transaction :
+	- stripe_fee(amount, cr, ff) = round(amount * cr) + ff
 - Les clés étrangères composites vérifient, sans code applicatif, que le moyen de paiement appartient au client, que le produit appartient au marchand, que le plan appartient au marchand et qu'il porte un frais fixe pour la devise. L'unicité de la clé d'idempotence est portée par la clé primaire `(merchant_id, idempotency_key)` de `IdempotencyKey`, table opérationnelle séparée de `Transaction` : elle se purge sur sa fenêtre de rejeu sans toucher aux transactions.
 
 \> *Exemple de sortie* :
@@ -262,17 +263,15 @@ ORDER BY l.occurred_at DESC;
 
 ---
 
-### D8.1.3. Couverture des exigences
+### Couverture des exigences
 
-| #            | Exigence \[D0\]            | Couverture                                            | État |
-| ------------ | -------------------------- | ----------------------------------------------------- | ------------------------------- |
-| **BR1/OLTP** | latence&nbsp;minimale      | accès par clé ou par index sélectif                                                         | 🟢 |
-| **TR1/OLTP** | *idem*                     | *idem* | 🟢 |
-| **BR1**      | intégrité&nbsp;transactionnelle | D8.1.2.3 (idempotence) ;| 🟠<br/>(à étendre) |
-|              |                            | intégrité vérifiée par FK composites | |
-| **BR5**      | conformité,&nbsp;audit     | D8.1.2.5 (échéances RGPD) ; | 🟢 |
-| **BR5**      | | D8.1.2.6 (qui accède à quoi) | |
-| **TR5**      | *idem*                     | *idem* | 🟢 |
+| #                | Exigence \[D0\]                 | Couverture                           | État               |    
+| ---------------- | ------------------------------- | ------------------------------------ | ------------------ |
+| **BR1**          | intégrité&nbsp;transactionnelle | D8.1.2.3 (idempotence) ;             | 🟠<br/>(à étendre) |    
+|                  |                                 | intégrité vérifiée par FK composites |                    |    
+| **BR1/TR1/OLTP** | latence&nbsp;minimale           | accès par clé ou par index sélectif  | 🟢                 |    
+| **BR5/TR5**      | conformité,&nbsp;audit          | D8.1.2.5 (échéances RGPD) ;          | 🟢                 |    
+|                  |                                 | D8.1.2.6 (qui accède à quoi)         |                    |     
 
 ---
 

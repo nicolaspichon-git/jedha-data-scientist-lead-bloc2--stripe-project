@@ -466,7 +466,7 @@ Table Transaction [headercolor: #E74C3C] {
   fee_amount bigint [not null, note: "Commission Stripe en unités mineures = ROUND(amount x commission_rate) + fixed_fee (arrondi demi-supérieur, fonction stripe_fee()). Valeur dérivée, matérialisée pour la performance - voir MCD règle #24."]
   currency_code varchar(3) [ref: > Currency.currency_code, not null]
   status_code varchar(20) [ref: > TransactionStatus.status_code, not null]
-  ip_geolocation varchar(45) [note: "Géolocalisation basée IP (IPv4/IPv6)"]
+  ip_geolocation varchar(45) [note: "Géolocalisation basée / IP (IPv4/IPv6)"]
   device_type varchar(20) [note: "CHECK (device_type IN ('mobile','desktop','tablet')) - liste courte et figée"]
   created_at timestamptz [not null, default: `now()`]
   updated_by varchar(255) [not null, note: "Auteur de la dernière écriture (création ou changement de statut)"]
