@@ -1,5 +1,5 @@
 ---
-version: v01
+version: v02
 locale: en
 tags:
   - _RNCP38777
@@ -16,7 +16,7 @@ tags:
 
 # Deliverables Checklist
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist  --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist / v02 --- 2026/11/05.*   
 ---
 
 ## D1. Comprehensive Data Architecture Diagram
@@ -48,7 +48,7 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 # Références
 
 #### Spécifications
-- \[D0\] [*Stripe Project Introduction*](stripe-step-0--introductionpdf)
+- \[D0\] [*Stripe Project Introduction*](stripe-step-0--introduction.pdf)
 
 #### Livrables
 
@@ -71,6 +71,7 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D2-D\] [*OLTP Replication, Failover and Disaster Recovery Strategy*](annexes/stripe-step-1--oltp-annexe-d--disaster-recovery-strategy.pdf)
 - \[D3-A\] [*OLAP Kimball Analysis*](annexes/stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
 - \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-step-2--olap-annexe-b--dbml.dbml)
+- \[D3-C\] [*OLAP Conventions and Transformation Rules*](annexes/stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
 - \[D4-A\] [*NoSQL Supporting Notes*](annexes/stripe-step-3--nosql-annexe-a--supporting-notes.pdf)
 
 #### Ressources

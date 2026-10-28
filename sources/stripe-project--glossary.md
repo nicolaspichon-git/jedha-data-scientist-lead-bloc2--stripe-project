@@ -1,5 +1,5 @@
 ---
-version: v01
+version: v02
 locale: fr
 tags:
   - _RNCP38777
@@ -16,7 +16,7 @@ tags:
 
 # Glossary
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Glossary  --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Glossary / v02  --- 2026/11/05.*   
 ---
 
 ## General
@@ -24,28 +24,32 @@ tags:
 
 ## OLTP Data System 
 
-- **MCD** (**CDM**) : Modèle Conceptuel de Données (Conceptual Data Model)
-- **MLD** (**LDM**) : Modèle Logique de Données (Logical Data Model)
-- **DEA** (**ERD**) : Diagramme Entités-Associations (Entity-Relationship Diagram)
-- **KYB** (**KYC**) : Know Your Business (Know Your Customer)
-- **RFM** : Recency, Frequency, Monetary value
+- **MCD** (**CDM**) : Modèle Conceptuel de Données (Conceptual Data Model).
+- **MLD** (**LDM**) : Modèle Logique de Données (Logical Data Model).
+- **DEA** (**ERD**) : Diagramme Entités-Associations (Entity-Relationship Diagram).
+- **KYB** (**KYC**) : Know Your Business (Know Your Customer).
+- **RFM** : Recency, Frequency, Monetary value.
 - **DR** : Disaster Recovery
-- **AZ** : Availability Zone
-- **RPO** : Recovery Point Objective
-- **RTO** : Recovery Time Objective
-- **PTIR** : Point-In-Time Recovery
-- **WAL** : Write Ahead Log (le journal d'écriture anticipée de *PostgreSQL*) ; 
-- **CDC** : Change Data Capture
-- **PAN** : Primary Account Number (numéro de compte principal)
-- 
+- **AZ** : Availability Zone.
+- **RPO** : Recovery Point Objective.
+- **RTO** : Recovery Time Objective.
+- **PTIR** : Point-In-Time Recovery.
+- **WAL** : Write Ahead Log (le journal d'écriture anticipée de *PostgreSQL*).
+- **CDC** : Change Data Capture.
+- **PAN** : Primary Account Number (numéro de compte principal).
 ## OLAP Data System
 
-- **MRR** : Monthly Recurrent Revenue (revenu récurrent mensuel)
+- **MRR** : Monthly Recurrent Revenue (revenu récurrent mensuel).
+- **RLS** : Row Level Security (sécurisation des accès aux tables au niveau des lignes),
 - **SCD** : Slowly Changing Dimension. 
 	- Concept central de la méthode *Kimball*. Répond à la question : "Quand un attribut d'une dimension change dans le monde réel (un marchand change de pays, un client change de statut), que fait-on dans l'entrepôt ?"
 	- Types SCD :
-		- SCD1 : écraser sans garder de trace ; La nouvelle valeur remplace l'ancienne directement dans la ligne existante ; Pas d'historique : si on interroge le passé, on retrouvera la valeur _actuelle_, pas celle qui était vraie à l'époque.
-		- SCD2 : garder toutes les versions, avec des dates de validité ; Un changement crée une nouvelle ligne dans la dimension (nouvelle clé technique), avec des colonnes `valid_from`/`valid_to` marquant la période de validité de chaque version. La ligne précédente n'est jamais modifiée ni supprimée, elle devient juste "expirée".
+		- **SCD1** : écraser sans garder de trace ; La nouvelle valeur remplace l'ancienne directement dans la ligne existante ; Pas d'historique : si on interroge le passé, on retrouvera la valeur _actuelle_, pas celle qui était vraie à l'époque.
+		- **SCD2** : garder toutes les versions, avec des dates de validité ; Un changement crée une nouvelle ligne dans la dimension (nouvelle clé technique), avec des colonnes `valid_from`/`valid_to` marquant la période de validité de chaque version. La ligne précédente n'est jamais modifiée ni supprimée, elle devient juste "expirée".
+- **Schemas**
+	- **Star Schema** (**schéma en étoile**): une table de faits au centre, entourée de tables de dimensions, chacune reliée directement au fait. Chaque dimension est dénormalisée : tous ses attributs sont dans une seule table, même s’ils se répètent.
+	- **Snowflake Schema** (**schéma en flocon**) : même principe, mais les dimensions sont normalisées en sous-tables. Une dimension peut donc être reliée à une autre dimension, sans passer par le fait.
+	
 ## NoSQL Data System
 
 - **Sharding** : partitionnement horizontal.
