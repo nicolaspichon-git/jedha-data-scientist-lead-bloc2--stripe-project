@@ -13,19 +13,18 @@ tags:
   - stripe-project/nosql
   - stripe-project/nosql/data-model
 ---
-
 *STRIPE* PROJECT
 ===
 
 # 3. NoSQL Data System
 ## D4. NoSQL Data Model
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D4 : NoSQL Data Model / v09 --- 2026/11/05.*   
 
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D4 : NoSQL Data Model / v09 --- 2026/11/05.*   
 ---
 
 ### D4.1 Contexte
 
-Le cahier de charge \[D0\] demande que le système *NoSQL* couvre les données semi-structurées et non structurées issues des sources suivantes (cf. \[D0, §0.2.6/DS3\]) : 
+Le cahier des charges \[D0\] demande que le système *NoSQL* couvre les données semi-structurées et non structurées issues des sources suivantes (cf. \[D0, §0.2.6/DS3\]) : 
 
 - interactions avec les utilisateurs (clickstreams et données de session), 
 - features d'apprentissage automatique (détection de fraude), 
@@ -51,7 +50,7 @@ La méthodologie de référence proposée *MongoDB* \[A1\] consiste à identifie
 
 ### D4.3. Principes de conception
 
-Le modèle *NoSQL* est gouverné par les principes suivant.
+Le modèle *NoSQL* est gouverné par les principes suivants.
 
 ###### 1.  Modéliser selon les accès
 En relationnel, on modélise le domaine puis on écrit les requêtes. En document, on part des
@@ -247,7 +246,7 @@ db.command("shardCollection", "stripe.user_sessions",
 - Embarqués : `events`, `device`, `geo`.
 
 ###### Durée de vie
-- Purge de la, session 90 jours après son démarrage (une fois que la session est agrégée et transportée vers la base OLAP, la donnée brute n'a pas vocation à être conservée indéfiniment).
+- Purge de la session 90 jours après son démarrage (une fois que la session est agrégée et transportée vers la base OLAP, la donnée brute n'a pas vocation à être conservée indéfiniment).
 
 #### D4.5.4. `ml_features` : le magasin des features
 
@@ -454,7 +453,7 @@ db.create_collection("merchant_config", validator=merchant_config_validator)
 ```
 
 ###### Patterns *MongoDB*
-- *Extended Reference Pattern* : `_id` est la clé de métier transactionnelle (`merchant_id`), mais le document duplique quelques attributs fréquemment lus (`legal_name`, `status`) pour éviter une lecture croisée vers les table transactionnelle à chaque événement. La redondance est acceptable ici précisément parce que ces attributs changent rarement et que `synced_at` documente leur actualité.
+- *Extended Reference Pattern* : `_id` est la clé de métier transactionnelle (`merchant_id`), mais le document duplique quelques attributs fréquemment lus (`legal_name`, `status`) pour éviter une lecture croisée vers les tables transactionnelles à chaque événement. La redondance est acceptable ici précisément parce que ces attributs changent rarement et que `synced_at` documente leur actualité.
 
 ###### Référencés vs. Embarqués
 - Référence : `country_code`. 
@@ -510,7 +509,7 @@ Par exemple, on minimise volontairement les indexes sur le document `event_logs`
 
 *Principe* : le *cloisonnement par marchand* sert de fil conducteur tant que le motif d'accès dominant n'impose pas une autre clé (principe déjà appliqué dans la base transactionnelle ; cf. \[D2-C\]).
 
-> Rappel : Le *cloisonnement entre marchands* est le principe selon lequel *les données d'un marchand ne se mélangent jamais avec celles d'un autre* , et ce à tous les niveaux du système. Par exemple, un client qui achète chez trois marchands différents n'est pas, dans le modèle, "une seule personne pour trois achats mais trois enregistrements `Customer` distincts, un par marchand, sans lien direct entre eux dans les données transactionnelles.
+> Rappel : Le *cloisonnement entre marchands* est le principe selon lequel *les données d'un marchand ne se mélangent jamais avec celles d'un autre* , et ce à tous les niveaux du système. Par exemple, un client qui achète chez trois marchands différents n'est pas, dans le modèle, une seule personne pour trois achats mais trois enregistrements `Customer` distincts, un par marchand, sans lien direct entre eux dans les données transactionnelles.
 
 <div style="page-break-after: always;"></div>
 
@@ -574,8 +573,8 @@ Rôles définis par collection (lecture seule sur `event_logs` pour les analyste
 - \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture.pdf)
 #### Annexes
 - \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.pdf)
-- \[D2-C\] [OLTP Supporting Notes](stripe-project--d2-oltp-annexe-c--design-notes.pdf)
-- \[D4-A\] [NoSQL Supporting Notes](stripe-project--d4-nosql-annexe-a--supporting-notes.pdf)
+- \[D2-C\] [OLTP Design Notes](stripe-project--d2-oltp-annexe-c--design-notes.pdf)
+- \[D4-A\] [NoSQL Storage Model Rationale](stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
 
 #### Spécifications
 - \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

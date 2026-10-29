@@ -20,7 +20,7 @@ tags:
 
 # 2. OLAP Data System
 ## Annexes
-### 2.A. Kimball Analysis
+### 2.A. OLAP Kimball Analysis
 
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D3 : OLAP Annexe A / v22 --- 2026/11/05.*   
 ---

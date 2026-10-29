@@ -13,7 +13,6 @@ tags:
   - stripe-project/olap
   - stripe-project/olap/queries
 ---
-
 *STRIPE* PROJECT
 ===
 
@@ -336,7 +335,7 @@ GROUP BY fsi.severity
 ORDER BY compliance_rate_percentage ASC;
 ```
 
-Pendant direct de P5.1 pour les incidents : même logique de conformité mais obligation réglementaire différente (72h de notification plutôt que délai de réponse). Ne retenir que les incidents notifiés surestimerait la conformité, car les non notifiés sont les cas les plus à risque. Le fait ne porte que des dates : un incident non notifié est jugé en retard quand `detected_date + 3 jours` est strictement passé, ce qui ne laisse aucun doute sur le dépassement des 72 heures. Le modèle ne distingue pas « notification non requise » de « pas encore notifié » (\[D3-C\], 2.C.3.8, OUV-09) : un incident sans notification requise est ici compté en retard.
+Pendant direct de P5.1 pour les incidents : même logique de conformité mais obligation réglementaire différente (72h de notification plutôt que délai de réponse). Ne retenir que les incidents notifiés surestimerait la conformité, car les non notifiés sont les cas les plus à risque. Le fait ne porte que des dates : un incident non notifié est jugé en retard quand `detected_date + 3 jours` est strictement passé, ce qui ne laisse aucun doute sur le dépassement des 72 heures. Le modèle ne distingue pas « notification non requise » de « pas encore notifié » (\[D3-C\], 2.C.3.8, O-09) : un incident sans notification requise est ici compté en retard.
 #### P6.2. Incidents de sécurité par marchand et par type
 *Consigne* : récupérer les incidents de sécurité affectés par marchand et par type d'incident ; les incidents transverses à la plateforme (sans marchand) sont regroupés à part.
 ```sql

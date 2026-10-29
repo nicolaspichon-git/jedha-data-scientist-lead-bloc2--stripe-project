@@ -28,7 +28,7 @@ La première exigence technique du cahier des charges (TR1 dans \[D0\]) demande 
 
 #### 3.A.2. Sources de données
 
-D'après \[D0\], les sources de données que *NoSQL* prendre en compte sont les suivants (cf. \[D0, §0.2.6/DS3\]) :
+D'après \[D0\], les sources de données que *NoSQL* doit prendre en compte sont les suivantes (cf. \[D0, §0.2.6/DS3\]) :
 
 - *Clickstreams des utilisateurs & données de sessions* : un événement de clic n'a pas les mêmes attributs qu'une soumission de formulaire ou qu'une vue de page ; la structure varie par nature d'un enregistrement à l'autre.
 - *Machine Learning features (détection de fraude)* : un vecteur de caractéristiques évolue au fil des itérations du modèle : on ajoute, retire, recombine des variables sans prévenir.
@@ -58,11 +58,11 @@ Pour répondre à l'exigence technique "_Efficient querying of nested and unstru
 - Indexation secondaire sur des sous-champs ;
 	- Par exemple, ce type d'indexation permet de trier ou de filtrer directement sur le champ `fraud_v3` qui est lui-même imbriqué dans la structure `model_scores` de la collection `ml_features` (cf. *Collections* dans \[D4\]) ; 
 - Indexation *multikey* sur des tableaux imbriqués ; 
-	- Exemple : dans la collection `user_sessions`, `events` est un tableau imbriqué dans chaque objet de session, `metadata`est une structure imbriquée dans chaque objet d'évènement; le champ `metadata.transaction_id` est donc niché à deux niveaux à l'intérieur de chaque élément de ce tableau (cf. *Collections* dans \[D4\]). 
+	- Exemple : dans la collection `user_sessions`, `events` est un tableau imbriqué dans chaque objet de session, `metadata` est une structure imbriquée dans chaque objet d'évènement; le champ `metadata.transaction_id` est donc niché à deux niveaux à l'intérieur de chaque élément de ce tableau (cf. *Collections* dans \[D4\]). 
 	- *MongoDB* crée automatiquement une entrée d'index par élément du tableau, de sorte qu'une requête comme `findOne({"events.metadata.transaction_id": "b7c2..."})` retrouve directement la session concernée sans parcourir un seul document ligne par ligne.
 
 ##### 3.A.4.4. Capture des changements par *Change Streams*
-*MongoDB* dispose nativement d'un mécanisme de capture des modifications basé sur des flux d'évènements continus dits *Change Streams*. Ecouter ces flux en temps réel permet au système d'alimenter le pipeline *NoSQL* -> *OLAP* via l'orchestration*Airflow* (cf. architecture globale \[D1\]).
+*MongoDB* dispose nativement d'un mécanisme de capture des modifications basé sur des flux d'évènements continus dits *Change Streams*. Ecouter ces flux en temps réel permet au système d'alimenter le pipeline *NoSQL* -> *OLAP* via l'orchestration *Airflow* (cf. architecture globale \[D1\]).
 
 ##### 3.A.4.5. *Sharding* horizontal natif
 Pour répondre à l'exigence technique "_distributed databases and data sharding_" (TR3 \[D0\]), *MongoDB* propose nativement des capacités de *sharding* horizontal. Cette technique de partitionnement permet de mettre le système à l'échelle horizontalement (*horizontal scaling*)  sans avoir besoin de revoir le modèle.
@@ -72,8 +72,9 @@ Pour répondre à l'exigence technique "_distributed databases and data sharding
 <div style="page-break-after: always;"></div>
 
 #### Références
-##### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+
 ##### Livrables
 - \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture.pdf)
-- \[D4\] [NoSQL Data Model](stripe-step-3--nosql-data-model.pdf)
+- \[D4\] [NoSQL Data Model](stripe-project--d4-nosql-data-model.pdf)
+##### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

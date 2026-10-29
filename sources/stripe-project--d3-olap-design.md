@@ -13,7 +13,6 @@ tags:
   - stripe-project/olap
   - stripe-project/olap/design
 ---
-
 *STRIPE* PROJECT
 ===
 
@@ -54,6 +53,8 @@ L'architecture en flocons (*snowflake*) réduit la redondance au prix de jointur
 ###### Dimensions indépendantes
 Aucune dimension ne référence une autre dimension : seules les tables de faits portent des clés étrangères vers les dimensions. `DimMerchant` étant en *SCD2*, une clé étrangère `DimCustomer` → `DimMerchant` désignerait une version du marchand et obligerait à versionner tous ses clients, produits et plans tarifaires à chaque changement du marchand. `DimCustomer`, `DimProduct` et `DimPricingPlan` portent donc `merchant_id` (clé métier de l'OLTP, sans lien) ; le marchand d'une ligne de fait reste `merchant_key` du fait. De même, `DimReferenceExchangeRate` identifie la devise source par `from_currency_code`, sans clé étrangère vers `DimCurrency` \[D3-A\] (2.A.4).
 
+<div style="page-break-after: always;"></div>
+
 ### D3.3. Les étoiles des processus métiers
 
 Les diagrammes ci-dessous présentent les schémas en étoile de chaque processus métier. 
@@ -92,6 +93,8 @@ Grain : un événement d'évaluation du risque de fraude (fait transactionnel). 
 
 `date_key` est la date UTC de l'évaluation (`FraudScore.evaluated_at`). `geography_key` est non nulle et résolue comme pour `FactTransaction` (D3.3.1) ; `exposed_amount_eur` est converti au taux de référence (D3.5.6).
 
+<div style="page-break-after: always;"></div>
+
 #### D3.3.3. Abonnements (P3/FactSubscriptionSnapshot)
 
 ![[stripe-step-2--olap-design--diagram-p3.svg]]
@@ -100,6 +103,8 @@ Grain : `FactSubscriptionSnapshot` (un instantané d'abonnement capturé périod
 
 `mrr_eur` et `stripe_mrr_eur` décrivent un état à un instant donné, et non un événement : ils sont semi-additifs (à ne pas sommer sur plusieurs dates pour un même abonnement). Ils sont convertis au taux de référence fixe (D3.5.6) : `exchange_rate_key` désigne le taux retenu, donc aussi la devise de l'abonnement (`from_currency_code`). `date_key` est la date UTC de l'instantané. `started_date_key` (début de l'abonnement) et `canceled_date_key` (demande de résiliation, vide s'il n'y en a pas) sont deux autres rôles de `DimDate` ; elles alimentent `new_subscriptions` et `churned_count` de `AggSubscriptionDailyMerchant`. Une résiliation demandée n'arrête pas l'abonnement avant la fin de la période déjà facturée : `churned_count` compte des demandes de résiliation, pas des abonnements terminés \[D3-C\] (2.C.2 et 2.C.3.6).
 
+<div style="page-break-after: always;"></div>
+
 #### D3.3.4. Lectures et écritures (P4/FactAuditEvent)
 
 ![[diagrams/stripe-step-2--olap-design--diagram-p4.svg]]
@@ -107,6 +112,8 @@ Grain : `FactSubscriptionSnapshot` (un instantané d'abonnement capturé périod
 Grain : un événement d'audit, accès (`DataAccessLog`) **ou** modification (`ChangeAuditLog`). 
 
 `geography_key` est non nulle. Pour les accès, le pays est résolu depuis `DataAccessLog.source_ip` ; pour les modifications (alimentées par CDC, sans IP dans l'OLTP), la ligne reçoit le membre « unknown ». `device_type` vaut toujours `unknown` pour ce fait : une analyse par pays ne couvre donc que les accès \[D3-A\] (2.A.4). `event_timestamp` est un `timestamptz` UTC.
+
+<div style="page-break-after: always;"></div>
 
 #### D3.3.5. Demandes de droits (P5/FactDataSubjectRequest)
 
@@ -196,7 +203,7 @@ bug côté client ne puisse exposer les données d'un autre marchand.
 La politique repose sur l'identifiant stable `merchant_id`, et non sur `merchant_key` : `DimMerchant` étant en *SCD2*, un marchand possède une `merchant_key` par version, et une politique `merchant_key = X` lui masquerait son historique. Elle s'applique ainsi :
 - **faits et agrégats** (qui portent `merchant_key`) : `merchant_key` doit appartenir à l'ensemble des clés du marchand de la session (`merchant_key IN (SELECT merchant_key FROM DimMerchant WHERE merchant_id = <marchand de la session>)`) ;
 - **dimensions propres à un marchand** (`DimMerchant`, `DimCustomer`, `DimProduct`, `DimPricingPlan`) : `merchant_id` égal à celui de la session. Les autres dimensions sont des référentiels partagés ;
-- **lignes sans marchand** (`merchant_key` nul dans `FactAuditEvent` et `FactSecurityIncident`) : n'appartenant à aucun marchand, elles ne sont pas visibles par cette politique ; leur lecture par les rôles internes reste à définir \[D3-C\] (2.C.3.8, OUV-08).
+- **lignes sans marchand** (`merchant_key` nul dans `FactAuditEvent` et `FactSecurityIncident`) : n'appartenant à aucun marchand, elles ne sont pas visibles par cette politique ; leur lecture par les rôles internes reste à définir \[D3-C\] (2.C.3.8, O-08).
 
 #### D3.5.8. Index ciblés
 **Index ciblés sur les clés de jointure et les colonnes de filtrage fréquent** - `date_key`
@@ -209,6 +216,8 @@ avec l'OLTP, et par `merchant_id` sur `DimMerchant`, `DimCustomer`, `DimProduct`
 Les valeurs que l'OLTP ne fournit pas telles quelles (segment client, regroupement des actions d'audit, remboursement et litige, fraude confirmée, MRR et compteurs d'abonnements, valeurs des événements d'écriture) sont définies par des règles numérotées `ETL-nn`, réunies dans \[D3-C\] (2.C.3) et citées dans les notes du modèle physique \[D3-B\]. Trois principes les gouvernent : la version de dimension SCD2 est celle en vigueur le jour UTC du fait ; seules quelques colonnes d'indicateurs sont mises à jour après l'insertion d'un fait (remboursement, litige, fraude confirmée) ; un rechargement redonne les mêmes lignes. Les seuils de segmentation et certains mappings sont des hypothèses de conception, signalées comme telles. Les politiques et règles non encore définies sont exposées en \[D3-C\] (2.C.3.8).
 
 ---
+
+<div style="page-break-after: always;"></div>
 
 ### Couverture des exigences
 
@@ -225,9 +234,9 @@ La mise en cache demandée par *TR3* \[D0\] n'est pas traitée dans ce document 
 ### Références
 
 #### Annexes
-- \[D3-A\] [OLAP Kimball Analysis](stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
-- \[D3-B\] [OLAP Physical Data Model](stripe-step-2--olap-annexe-b--dbml.dbml)
-- \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
+- \[D3-A\] [OLAP Kimball Analysis](stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
+- \[D3-B\] [OLAP Physical Data Model](stripe-project--d3-olap-annexe-b--dbml.pdf)
+- \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)
 
 #### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

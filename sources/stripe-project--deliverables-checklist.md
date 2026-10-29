@@ -1,5 +1,5 @@
 ---
-version: v02
+version: v03
 locale: en
 tags:
   - _RNCP38777
@@ -16,7 +16,7 @@ tags:
 
 # Deliverables Checklist
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist / v02 --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist / v03 --- 2026/11/05.*   
 ---
 
 ## D1. Comprehensive Data Architecture Diagram
@@ -48,32 +48,29 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 # Références
 
 #### Spécifications
-- \[D0\] [*Stripe Project Introduction*](stripe-step-0--introduction.pdf)
+- \[D0\] [*Stripe Project Introduction*](stripe-project--d0-introduction.pdf)
 
 #### Livrables
-
 - \[D1\] [*Comprehensive Data Architecture Diagram*](stripe-step-8--data-architecture.pdf)
-- \[D2\] [*OLTP Entity-Relation Diagrams*](stripe-step-1--oltp-diagrams.pdf)
-- \[D3] [*OLAP System Schema Design*](stripe-step-2--olap-design.pdf)
-- \[D4\] [*NoSQL Data Model*](stripe-step-3--nosql-data-model.pdf)
+- \[D2\] [*OLTP Entity-Relation Diagrams*](stripe-project--d2-oltp-diagrams.pdf)
+- \[D3\] [*OLAP System Schema Design*](stripe-project--d3-olap-design.pdf)
+- \[D4\] [*NoSQL Data Model*](stripe-project--d4-nosql-data-model.pdf)
 - \[D5\] [*Data Pipeline Architecture*](stripe-step-4--data-pipeline-architecture.pdf)
 - \[D6\] [*Security and Compliance Plan*](stripe-step-5--security-and-compliance-plan.pdf)
 - \[D7\] [*Machine Learning Integration Strategy*](stripe-step-4--ml-integration-strategy.pdf)
-- \[D8-1\] [*SQL and NoSQL Queries : OLTP Queries*](stripe-step-1--oltp-queries.pdf)
-- \[D8-2\] [*SQL and NoSQL Queries : OLAP Queries*](stripe-step-2--olap-queries.pdf)
-- \[D8-3\] [*SQL and NoSQL Queries : NoSQL Queries*](stripe-step-3--nosql-queries.pdf)
+- \[D8-1\] [*SQL and NoSQL Queries : OLTP Queries*](stripe-project--d8-oltp-queries.pdf)
+- \[D8-2\] [*SQL and NoSQL Queries : OLAP Queries*](stripe-project--d8-olap-queries.pdf)
+- \[D8-3\] [*SQL and NoSQL Queries : NoSQL Queries*](stripe-project--d8-nosql-queries.pdf)
 
 #### Annexes
-
-- \[D2-A\] [*OLPT Conceptual Data Model*](annexes/stripe-step-1--oltp-annexe-a--mcd.pdf)
-- \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-step-1--oltp-annexe-b--dbml.dbml)
-- \[D2-C\] [*OLTP Design Notes*](annexes/stripe-step-1--oltp-annexe-c--design-notes.pdf)
-- \[D2-D\] [*OLTP Replication, Failover and Disaster Recovery Strategy*](annexes/stripe-step-1--oltp-annexe-d--disaster-recovery-strategy.pdf)
-- \[D3-A\] [*OLAP Kimball Analysis*](annexes/stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
-- \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-step-2--olap-annexe-b--dbml.dbml)
-- \[D3-C\] [*OLAP Conventions and Transformation Rules*](annexes/stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
-- \[D4-A\] [*NoSQL Storage Model Rationale*](annexes/stripe-step-3--nosql-annexe-a--storage-model-rationale.pdf)
+- \[D2-A\] [*OLPT Conceptual Data Model*](annexes/stripe-project--d2-oltp-annexe-a--mcd.pdf)
+- \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-project--d2-oltp-annexe-b--dbml.dbml)
+- \[D2-C\] [*OLTP Design Notes*](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
+- \[D2-D\] [*OLTP Replication, Failover and Disaster Recovery Strategy*](annexes/stripe-project--d2-oltp-annexe-d--disaster-recovery-strategy.pdf)
+- \[D3-A\] [*OLAP Kimball Analysis*](annexes/stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
+- \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-project--d3-olap-annexe-b--dbml.dbml)
+- \[D3-C\] [*OLAP Conventions and Transformation Rules*](annexes/stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)
+- \[D4-A\] [*NoSQL Storage Model Rationale*](annexes/stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
 
 #### Ressources
-
 - \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)

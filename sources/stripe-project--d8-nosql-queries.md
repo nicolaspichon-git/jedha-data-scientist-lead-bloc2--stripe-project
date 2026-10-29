@@ -13,7 +13,6 @@ tags:
   - stripe-project/nosql
   - stripe-project/nosql/queries
 ---
-
 *STRIPE* PROJECT
 ===
 
@@ -21,7 +20,6 @@ tags:
 ## D8.3. NoSQL Queries Examples
 
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D8.3 : NoSQL Queries / v08 --- 2026/11/05.*
-
 ---
 
 ### D8.3.1. Contexte
@@ -164,7 +162,7 @@ quand cette vérification a lieu à haute fréquence sur le chemin de décision 
 ### Références
 
 #### Livrables
-- \[D4\] [NoSQL Data Model](stripe-step-3--nosql-data-model.pdf)
-- 
+- \[D4\] [NoSQL Data Model](stripe-project--d4-nosql-data-model.pdf)
+
 #### Ressources
 - \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)

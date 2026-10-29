@@ -309,11 +309,13 @@ Les tables dédiées aux questions de *sécurité* et de *conformité* forment l
 ### Références
 
 #### Annexes
-- \[D2-A\] [OLTP Data Conceptual Model](annexes/stripe-step-1--oltp-annexe-a--mcd.pdf)
-- \[D2-B\] [OLTP Data Physical Model](annexes/stripe-step-1--oltp-annexe-b--dbml.dbml)
-- \[D2-C\] [OLTP Design Notes](annexes/stripe-step-1--oltp-annexe-c--design-notes.pdf)
-- \[D2-D\] [OLTP Replication, Failover and Disaster Recovery Strategy](annexes/stripe-step-1--oltp-annexe-d--disaster-recovery-strategy.pdf)
+- \[D2-A\] [OLTP Data Conceptual Model](annexes/stripe-project--d2-oltp-annexe-a--mcd.pdf)
+- \[D2-B\] [OLTP Data Physical Model](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)
+- \[D2-C\] [OLTP Design Notes](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
+- \[D2-D\] [OLTP Replication, Failover and Disaster Recovery Strategy](annexes/stripe-project--d2-oltp-annexe-d--disaster-recovery-strategy.pdf)
+
 #### Livrables
 - \[D1\] [Data Architecture](stripe-step-8--data-architecture.pdf)
+
 #### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

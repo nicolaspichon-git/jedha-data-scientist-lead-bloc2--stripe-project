@@ -17,7 +17,6 @@ tags:
 ===
 
 # 1. OLTP Data System
-
 ## D8.1. OLTP SQL Queries Examples
 
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D8.1 : OLTP Queries / v36 --- 2026/11/05.*   
@@ -63,7 +62,7 @@ On n'explore pas les domaines exigés dans le cas d'étude \[D0\] :  analyse de 
 SELECT t.transaction_id, t.merchant_id, t.customer_id, t.currency_code, t.amount, t.fee_amount, 
        t.status_code, t.created_at
 FROM Transaction t
-WHERE t.transaction_id = ;
+WHERE t.transaction_id = :transaction_id ;
 ```
 
 \> *Commentaire* : Accès par la seule clé primaire `transaction_id` (pas de partitionnement).

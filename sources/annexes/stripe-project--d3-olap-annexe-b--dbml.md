@@ -109,7 +109,7 @@ Project StripeAnalyticsSystem {
     - Faits et agrégats : merchant_key doit appartenir à l'ensemble des clés du marchand de la session
       (merchant_key IN (SELECT merchant_key FROM DimMerchant WHERE merchant_id = <marchand de la session>)).
     - DimMerchant, DimCustomer, DimProduct, DimPricingPlan : merchant_id égal à celui de la session. Les autres dimensions sont des référentiels partagés.
-    - Lignes sans marchand (merchant_key nul : FactAuditEvent, FactSecurityIncident) : non visibles par cette politique ; lecture par les rôles internes à définir (D3-C 2.C.3.8, OUV-08).
+    - Lignes sans marchand (merchant_key nul : FactAuditEvent, FactSecurityIncident) : non visibles par cette politique ; lecture par les rôles internes à définir (D3-C 2.C.3.8, O-08).
     Tous les accès sont journalisés dans FactAuditEvent.
 
     ACTUALISATION DIFFÉRENCIÉE
@@ -824,7 +824,7 @@ Table AggComplianceDailyMerchant {
 
     Clé : (date_key, merchant_key)
 
-    Les événements d'audit sans marchand (FactAuditEvent.merchant_key nul) ne sont pas comptés dans cet agrégat par marchand (D3-C 2.C.3.8, OUV-08 et OUV-10).
+    Les événements d'audit sans marchand (FactAuditEvent.merchant_key nul) ne sont pas comptés dans cet agrégat par marchand (D3-C 2.C.3.8, O-08 et O-10).
 
   Indicateurs :
   - total_access_count : le nombre d'accès aux données de ce marchand à ce jour - tous types d'accès confondus. 
