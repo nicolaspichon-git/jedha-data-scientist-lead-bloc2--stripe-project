@@ -22,7 +22,7 @@ tags:
 ## Annexes
 ### 1.C. OLTP Design Notes
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / OLTP Data System / Annexe C  / v36 - 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / OLTP Data System / Annexe C  / v36 --- 2026/11/05.*   
 
 ---
 
