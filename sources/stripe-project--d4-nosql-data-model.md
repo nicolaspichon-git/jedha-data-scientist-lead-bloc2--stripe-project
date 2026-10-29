@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -19,14 +19,13 @@ tags:
 
 # 3. NoSQL Data System
 ## D4. NoSQL Data Model
-
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D4 : NoSQL Data Model / v08 --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D4 : NoSQL Data Model / v09 --- 2026/11/05.*   
 
 ---
 
 ### D4.1 Contexte
 
-Le *business case* \[R0\] demande que le système *NoSQL* couvre les données semi-structurées et non structurées issues des sources suivantes (cf. \[R0\] 3. _Data Source_ / _Semi-Structured and Non Structured Data_) : 
+Le cahier de charge \[D0\] demande que le système *NoSQL* couvre les données semi-structurées et non structurées issues des sources suivantes (cf. \[D0, §0.2.6/DS3\]) : 
 
 - interactions avec les utilisateurs (clickstreams et données de session), 
 - features d'apprentissage automatique (détection de fraude), 
@@ -65,6 +64,8 @@ sur les champs critiques pour éviter une dérive silencieuse.
 ###### 3. Imbriquer par défaut, référencer exceptionnellement
 Le levier de performance principal du modèle orienté *documents*, c'est d'éviter les jointures. Un document qui *embarque* (par opposition à "référencer") toutes les données que l'on attend d'une lecture typique permet de récupérer l'ensemble de ces données en un seul accès disque. L'imbrication est donc le choix de relation par défaut. Une entité interne d'un document n'est référencée que dans certains cas particuliers : entité partagée entre plusieurs documents, entité de taille non bornée, entité dont le cycle de vie est indépendant du document qui la mentionne. 
 
+<div style="page-break-after: always;"></div>
+
 ### D4.4. Analyse des motifs d'accès
 
 | Collection          | Écriture              | Lecture                | Ratio écriture/lecture          |
@@ -73,19 +74,21 @@ Le levier de performance principal du modèle orienté *documents*, c'est d'évi
 | `user_sessions`     | Unitaire, à chaque interaction | Session entière, en une fois | Fortement dominé par l'écriture |
 | `ml_features`       | Recalcul périodique par entité | Immédiate par le modèle (inférence temps réel) | Équilibré, lecture critique en latence |
 | `customer_feedback` | Occasionnelle (après achat/interaction) | Par client, ou agrégée par marchand/produit | Dominé par la lecture agrégée |
-| `merchant_config`   | Quasi jamais | Très fréquente, par clé unique | Quasi exclusivement lu +|
+| `merchant_config`   | Quasi jamais | Très fréquente, par clé unique | Quasi exclusivement lu |
 
 Cette analyse commande directement les décisions _embed_ / _reference_ et les index des sections suivantes (ex: un motif d'accès mal identifié ici produirait un schéma qu'aucun index ne pourrait ensuite corriger efficacement).
 
 ### D4.5. Collections
 
 #### D4.5.1. Remarque sur la validation des schémas
-Les collections suivante sont soumises à une validation *JSON Schema* minimale, qui porte sur l'*enveloppe* du document (version, identifiants, horodatages, etc.) mais pas sur son contenu variable (`context`, `features`, `events`, `metadata`).
+Les collections suivantes sont soumises à une validation *JSON Schema* minimale, qui porte sur l'*enveloppe* du document (version, identifiants, horodatages, etc.) mais pas sur son contenu variable (`context`, `features`, `events`, `metadata`).
 
 #### D4.5.2. `event_logs` : les journaux applicatifs
 
-Volume très élevé, écriture massive, lecture ciblée par fenêtre temporelle. 
+*Caractéristiques* : Volume très élevé, écriture massive, lecture ciblée par fenêtre temporelle. 
 Le sous-document `context` reste _libre_ (forme variable selon le service émetteur). 
+
+![[diagrams/stripe-step-3--nosql-data-model--diagram-1-1.svg|600]]
 
 
 ```python
@@ -117,7 +120,9 @@ event_log_example = {
 event_logs_validator = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["schema_version", "timestamp", "level", "service", "merchant_id"],
+        "required": [
+	        "schema_version", "timestamp", "level", "service", "merchant_id"
+	    ],
         "properties": {
             "schema_version": {"bsonType": "int"},
             "timestamp":      {"bsonType": "date"},
@@ -141,7 +146,7 @@ db.event_logs.create_index([("transaction_id", 1)], sparse=True)
 db.event_logs.create_index([("expires_at", 1)], expireAfterSeconds=0)
 
 # Sharding :
-# -- shardin key : { service: 1, timestamp: 1 }
+# -- sharding key : { service: 1, timestamp: 1 }
 db.command("shardCollection", "stripe.event_logs", 
 	key={"service": 1, "timestamp": 1})
 ```
@@ -155,8 +160,10 @@ Purge automatique de l'entrée de journal 90 jours après sa création (principe
 
 #### D4.5.3. `user_sessions` : clickstream et interactions
 
-Une session d'utilisateur est un document. 
+*Caractéristiques* : une session d'utilisateur est un document. 
 Les événements sont _imbriqués_, car on ne consulte jamais un évènement de clic isolément.
+
+![[diagrams/stripe-step-3--nosql-data-model--diagram-1-2.svg|800]]
 
 ```python
 from datetime import datetime
@@ -173,14 +180,22 @@ user_session_example = {
     "duration_sec": 1064,
     "event_count": 4,
     "device": {
-        "type": "mobile", "os": "iOS 18.2",
-        "browser": "Safari", "screen": "390x844"
+        "type": "mobile", 
+        "os": "iOS 18.2", 
+        "screen": "390x844",
+        "browser": "Safari"
     },
-    "geo": {"ip_country": "FR", "region": "Bretagne", "city": "Rennes"},
+    "geo": {
+	    "ip_country": "FR",
+		"region": "eu-west", 
+		"city": "Rennes"
+	},
     "events": [
-        {"ts": datetime(2026, 7, 23, 10, 2, 4), "type": "page_view",
+        {"ts": datetime(2026, 7, 23, 10, 2, 4), 
+        "type": "page_view",
          "metadata": {"path": "/checkout"}},
-        {"ts": datetime(2026, 7, 23, 10, 6, 30), "type": "purchase",
+        {"ts": datetime(2026, 7, 23, 10, 6, 30), 
+        "type": "purchase",
          "metadata": {"transaction_id": "b7c2..."}}
     ],
     "outcome": "converted"
@@ -212,7 +227,7 @@ db.user_sessions.create_index([("events.metadata.transaction_id", 1)])
 db.user_sessions.create_index([("started_at", 1)], expireAfterSeconds=90 * 24 * 3600)
 
 # Sharding :
-# -- shardin key : { merchant_id: 1, started_at: 1 }
+# -- sharding key : { merchant_id: 1, started_at: 1 }
 db.command("shardCollection", "stripe.user_sessions",
            key={"merchant_id": 1, "started_at": 1})
 ```
@@ -236,10 +251,11 @@ db.command("shardCollection", "stripe.user_sessions",
 
 #### D4.5.4. `ml_features` : le magasin des features
 
-Alimente la détection de fraude en temps réel. Lecture à très faible latence sur la clé primaire. 
-une seule lecture doit suffire à disposer de toutes les features nécessaires à la décision, sans agrégation ni jointure à la volée.
+*Caractéristiques* : alimente la détection de fraude en temps réel. Lecture à très faible latence sur la clé primaire. Une seule lecture doit suffire à disposer de toutes les features nécessaires à la décision, sans agrégation ni jointure à la volée.
 
 **Point de conception** : un document continuellement actualisé par entité. C'est le bon grain pour un magasin de features servant l'inférence en temps réel : au moment où une nouvelle transaction arrive, il faut récupérer le profil _courant_ du client (pas l'historique des évaluations passées). Le magasin de features *NoSQL* est donc un cache d'état courant.
+
+![[diagrams/stripe-step-3--nosql-data-model--diagram-1-3.svg|800]]
 
 ```python
 from datetime import datetime
@@ -291,7 +307,7 @@ db.ml_features.create_index([("merchant_id", 1), ("computed_at", -1)])
 db.ml_features.create_index([("model_scores.fraud_v3", -1)])
 
 # Sharding :
-# -- shardin key : { _id: "hashed" }
+# -- sharding key : { _id: "hashed" }
 db.command("shardCollection", "stripe.ml_features", key={"_id": "hashed"})
 ```
 
@@ -301,12 +317,13 @@ db.command("shardCollection", "stripe.ml_features", key={"_id": "hashed"})
 
 ###### Référencés vs. Embarqués
 - Références : `entity_id`, `merchant_id`.
-- Embarqués : `features`~~+ `model_scores` (toujours lus ensemble)~~.
+- Embarqués : `features` + `model_scores` (toujours lus ensemble).
 
 #### D4.5.5. `customer_feedback` : les réponses des avis et des enquêtes
 
-Volume modeste, structure hétérogène, recherche plein texte. 
+*Caractéristiques* : volume modeste, structure hétérogène, recherche plein texte. 
 
+![[diagrams/stripe-step-3--nosql-data-model--diagram-1-4.svg]]
 
 ```python
 from datetime import datetime
@@ -326,7 +343,7 @@ customer_feedback_example = {
         "language": "fr"
     },
     "context": {
-        "order_id": "txn_5a02...",
+        "order_id": "a02...", # ou "unknown".
         "responses": [
             {"question_id": "q1", "answer": "4"},
             {"question_id": "q2", "answer": "Confirmation lente"}
@@ -364,7 +381,7 @@ db.customer_feedback.create_index([("content.text", "text")])
 db.customer_feedback.create_index([("nlp.sentiment", 1)])
 
 # Sharding :
-# -- shardin key : { merchant_id: 1 }
+# -- sharding key : { merchant_id: 1 }
 db.command("shardCollection", "stripe.customer_feedback", key={"merchant_id": 1})
 ```
 
@@ -386,9 +403,13 @@ db.command("shardCollection", "stripe.customer_feedback", key={"merchant_id": 1}
 ###### Stratégie de sharding
 - Clé de *sharding* :`merchant_id` car lecture dominante du document par marchand.
 
+<div style="page-break-after: always;"></div>
+
 #### D4.5.6. `merchant_config` : configuration dénormalisée
 
-Cache de référence pour éviter d'interroger les tables transactionnelles à chaque événement applicatif. Petite collection, très lue, quasiment jamais écrite. 
+*Caractéristiques* : cache de référence pour éviter d'interroger les tables transactionnelles à chaque événement applicatif. Petite collection, très lue, quasiment jamais écrite. 
+
+![[diagrams/stripe-step-3--nosql-data-model--diagram-1-5.svg|600]]
 
 ```python
 from datetime import datetime
@@ -402,8 +423,8 @@ merchant_config_example = {
     "status": "active",
     "risk_profile": {
         "tier": "standard",
-        "manual_review_threshold": 0.75,
-        "auto_block_threshold": 0.95
+        "auto_block_threshold": 0.95,
+        "manual_review_threshold": 0.75
     },
     "enabled_features": ["3ds", "subscriptions", "instant_payout"],
     "synced_at": datetime(2026, 7, 23, 6, 0, 0)
@@ -433,10 +454,12 @@ db.create_collection("merchant_config", validator=merchant_config_validator)
 ```
 
 ###### Patterns *MongoDB*
-- **Extended Reference Pattern** : `_id` est la clé de métier transactionnelle (`merchant_id`), mais le document duplique quelques attributs fréquemment lus (`legal_name`, `status`) pour éviter une lecture croisée vers les table transactionnelle à chaque événement. La redondance est acceptable ici précisément parce que ces attributs changent rarement et que `synced_at` documente leur actualité.
+- *Extended Reference Pattern* : `_id` est la clé de métier transactionnelle (`merchant_id`), mais le document duplique quelques attributs fréquemment lus (`legal_name`, `status`) pour éviter une lecture croisée vers les table transactionnelle à chaque événement. La redondance est acceptable ici précisément parce que ces attributs changent rarement et que `synced_at` documente leur actualité.
 
 ###### Référencés vs. Embarqués
-- Seule collection où des attributs normalement référencés (le nom du marchand) sont volontairement dupliqués pour des raisons de performance de lecture.
+- Référence : `country_code`. 
+	- Référence étendue : *marchand* : `legal_name`, `status`. 
+- Embarqué : `risk_profile`.
 
 ###### Stratégie d'indexation
 - Indexes : pas d'index de secondaire car on accède directement par `_id`.
@@ -476,7 +499,7 @@ Types d'indexation disponibles et leur usage dans le modèle :
 | ---------------- | --------------------------------- | --------------------------------------- |
 | Simple / composé | `{merchant_id: 1, timestamp: -1}` | filtre + tri fréquents                  |
 | Multikey         | `events.metadata.transaction_id`  | sur un tableau imbriqué                 |
-| Texte            | `context.text`                    | recherche plein texte                   |
+| Texte            | `content.text`                    | recherche plein texte                   |
 | TTL              | `event_logs.expires_at`           | purge automatique                       |
 | Sparse           | `{transaction_id: 1}`             | le champ n'existe que sur certains logs |
 
@@ -485,9 +508,11 @@ Par exemple, on minimise volontairement les indexes sur le document `event_logs`
 
 ### D4.7. Stratégie de *sharding*
 
-**Principe directeur** : le *cloisonnement par marchand* sert de fil conducteur tant que le motif d'accès dominant n'impose pas une autre clé (principe déjà appliqué dans la base transactionnelle ; cf. \[D2-C\]).
+*Principe* : le *cloisonnement par marchand* sert de fil conducteur tant que le motif d'accès dominant n'impose pas une autre clé (principe déjà appliqué dans la base transactionnelle ; cf. \[D2-C\]).
 
 > Rappel : Le *cloisonnement entre marchands* est le principe selon lequel *les données d'un marchand ne se mélangent jamais avec celles d'un autre* , et ce à tous les niveaux du système. Par exemple, un client qui achète chez trois marchands différents n'est pas, dans le modèle, "une seule personne pour trois achats mais trois enregistrements `Customer` distincts, un par marchand, sans lien direct entre eux dans les données transactionnelles.
+
+<div style="page-break-after: always;"></div>
 
 | Collection          | Clé de sharding                     | Justification                                                             |
 | ------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
@@ -496,21 +521,19 @@ Par exemple, on minimise volontairement les indexes sur le document `event_logs`
 | `ml_features`       | `{ _id: "hashed" }`                 | Répartition uniforme, accès par clé unique sans pattern marchand dominant |
 | `customer_feedback` | `merchant_id`                       | Lecture dominante par marchand                                            |
 | `merchant_config`   | Non "shardée"                       | Volume trop faible                                                        |
-|                     |                                     |                                                                           |
-
 
 ### D4.8. Intégration OLTP / OLAP
 
 Le modèle *NoSQL* s'intègre aux deux autres systèmes de données de la manière suivante (voir aussi \[D1\]).
 
 ###### Intégration *OLTP* > *NoSQL*
-Dans le système *OLTP*, les captures *CDC* sur `transaction`, `merchant` et `customer` alimentent un flux d'évènements *Kafka*, consommés par un agent qui actualise `merchant_config` et déclenche le recalcul des `ml_features`. Les identifiants *OLTP* (`transaction_id`, `merchant_id`) servent de clés de rapprochement.
+Dans le système *OLTP*, les captures *CDC* sur `transaction`, `merchant` et `customer` alimentent un flux d'évènements (*Kafka*), consommés par un agent qui actualise `merchant_config` et déclenche le recalcul des `ml_features`. Les identifiants *OLTP* (`transaction_id`, `merchant_id`) servent de clés de rapprochement.
 
 ###### Intégration *NoSQL* > *OLAP*
 Les flux d'évènements *Change Streams* du système *NoSQL* assurent le transport continu des changements sur les collections `user_sessions` et `ml_features` vers les processus _Airflow_. Le consommateur _Airflow_ accumule les changements reçus en continu et les transforme à échéance planifiée. Les sessions et les scores de fraude sont donc agrégés, et chargés dans `FactFraudEvent` et les dimensions comportementales,  par *lots nocturnes*. Les données brutes reçues restent dans le système *NoSQL* et seul les agrégats partent vers l'entrepôt analytique.
 
-###### *NoSQL* comme couche de rapprochement transverse
-C'est dans le système *NoSQL* que l'on peut rapprocher une même personne physique agissant chez plusieurs marchands (via l'empreinte de sa carte), sans compromettre le cloisonnement transactionnel entre marchands.
+###### *NoSQL* comme "couche de rapprochement transverse"
+Dans le système *NoSQL*, on peut rapprocher une même personne physique agissant chez plusieurs marchands (via l'empreinte de sa carte, par exemple), sans compromettre le cloisonnement transactionnel entre marchands.
 
 ### D4.9. Cohérence, sécurité et conformité
 
@@ -533,7 +556,9 @@ Aucune donnée de carte bancaire complète n'est stockée dans le système *NoSQ
 ###### Contrôle d'accès
 Rôles définis par collection (lecture seule sur `event_logs` pour les analystes, écriture réservée aux services), et journalisation des accès.
 
-### D4.10. Couverture des exigences
+<div style="page-break-after: always;"></div>
+
+### Couverture des exigences
 
 | #   | Exigence                                                                  | Couverture                                                      |
 | --- | ------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -543,20 +568,17 @@ Rôles définis par collection (lecture seule sur `event_logs` pour les analyste
 
 ---
 
-<div style="page-break-after: always;"></div>
-
 ### Références
 
 #### Livrables
-- \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture--v08.pdf)
-- 
+- \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture.pdf)
 #### Annexes
-- \[D2-B\] [OLTP Physical Model](stripe-step-1--oltp-annexe-b--dbml--v25.pdf)
-- \[D2-C\] [OLTP Supporting Notes](stripe-step-1--oltp-annexe-c--supporting-notes--v25.pdf)
-- \[D4-A\] [NoSQL Supporting Notes](stripe-step-3--nosql-annexe-a--supporting-notes--v08.pdf)
+- \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.pdf)
+- \[D2-C\] [OLTP Supporting Notes](stripe-project--d2-oltp-annexe-c--design-notes.pdf)
+- \[D4-A\] [NoSQL Supporting Notes](stripe-project--d4-nosql-annexe-a--supporting-notes.pdf)
 
-#### Ressources
-- \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
 
 #### Documents Applicables
 - \[A1\] [MongoDB : Designing Your Schema](https://www.mongodb.com/docs/manual/data-modeling/schema-design-process/)
