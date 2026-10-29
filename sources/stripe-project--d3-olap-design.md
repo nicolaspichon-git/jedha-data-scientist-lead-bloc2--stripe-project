@@ -32,11 +32,11 @@ Ce document présente le schéma de l'entrepôt analytique :
 > Convention de notation des cardinalités dans les diagrammes présentés :  notation *crow's foot*,
 > - \> `||` = un et un seul, `o{`  = zéro à plusieurs.
 
-L'analyse préliminaire des processus métiers est donnée en annexe \[D3-A\]. Six processus métiers sont identifiés en se basant sur les catégories des données analytiques données dans le document de spécifications du cas d'étude \[D0\] :
+L'analyse préliminaire des processus métiers est donnée en annexe \[D3-A\]. Six processus sont identifiés en se basant sur les catégories des données analytiques présentées dans le cahier des charges \[D0\] :
 
 | #   | Processus métier                     | Source de données analytiques | Événement déclencheur |
 | --- | ------------------------------------ | ----------------------------- | --------------------- | 
-| P1  | Traitement d'un paiement             | *Revenue Metrics*, *Product Performance*, *Customer Segmentation* | Création d'une transaction |
+| P1  | Traitement d'un paiement             | *Revenue Metrics*,<br*Product Performance*, *Customer Segmentation* | Création d'une transaction |
 | P2  | Évaluation du risque de fraude       | *Fraud Analysis Data* | Calcul d'un score de fraude |
 | P3  | Cycle de vie d'un abonnement         | *Revenue Metrics* | Arrivée à échéance d'un abonnement |
 | P4  | Accès et modification de données     | *Compliance and Audit Logs* | Journalisation d'une consultation ou d'une modification |
@@ -45,13 +45,19 @@ L'analyse préliminaire des processus métiers est donnée en annexe \[D3-A\]. S
 
 ### D3.2. Schémas en étoile
 
-Dans le schéma en étoile (*star*), chaque *dimension* est directement reliée à la *table de faits*, sans hiérarchie de sous-dimensions normalisées.
+Dans le schéma en étoile (*star schema*), chaque *dimension* est directement reliée à la *table de faits*, sans hiérarchie de sous-dimensions normalisées.
 
 ###### Justification
-L'architecture en flocons (*snowflake*) réduit la redondance au prix de jointures supplémentaires ; en lecture analytique, c'est l'inverse de l'objectif recherché (*TR1* \[D0\] : schémas « en étoile ou en flocon pour un requêtage et une agrégation efficaces » ; *TR3* \[D0\] : « optimiser les performances sur l'ensemble des systèmes »). La dénormalisation assumée dans les dimensions coûte en stockage mais pas en temps de requête.
+L'architecture en flocons (*snowflake schema*) réduit la redondance au prix de jointures supplémentaires. En lecture analytique, c'est l'inverse de l'objectif recherché. La *dénormalisation* assumée dans les dimensions coûte en stockage mais gagne en temps de requête.
 
 ###### Dimensions indépendantes
-Aucune dimension ne référence une autre dimension : seules les tables de faits portent des clés étrangères vers les dimensions. `DimMerchant` étant en *SCD2*, une clé étrangère `DimCustomer` → `DimMerchant` désignerait une version du marchand et obligerait à versionner tous ses clients, produits et plans tarifaires à chaque changement du marchand. `DimCustomer`, `DimProduct` et `DimPricingPlan` portent donc `merchant_id` (clé métier de l'OLTP, sans lien) ; le marchand d'une ligne de fait reste `merchant_key` du fait. De même, `DimReferenceExchangeRate` identifie la devise source par `from_currency_code`, sans clé étrangère vers `DimCurrency` \[D3-A\] (2.A.4).
+Aucune dimension ne référence une autre dimension : seules les tables de faits portent des clés étrangères vers les dimensions. 
+
+`DimMerchant` étant une *SCD2* (\*), une clé étrangère (`key`) de type `DimCustomer` → `DimMerchant` désignerait une version spécifique du marchand et obligerait à versionner tous ses clients, produits et plans tarifaires à chaque changement du marchand. `DimCustomer`, `DimProduct` et `DimPricingPlan` portent donc `merchant_id` (la clé métier de l'OLTP) seule. La version de marchand d'une ligne de fait (*fact*) reste identifiée par `merchant_key`. 
+
+De même, `DimReferenceExchangeRate` identifie la devise source par `from_currency_code`, sans clé étrangère vers `DimCurrency` \[D3-A, §2.A.4\].
+
+> (\*) *SCD2* = *Slowly Changing Dimension of Type 2* où *Type 2* signifie que chaque modification est versionnée.
 
 <div style="page-break-after: always;"></div>
 
@@ -59,7 +65,7 @@ Aucune dimension ne référence une autre dimension : seules les tables de faits
 
 Les diagrammes ci-dessous présentent les schémas en étoile de chaque processus métier. 
 
-Chaque étoile a son propre diagramme (six diagrammes pour six processus) : 
+Chaque étoile a son propre diagramme : 
 - *Transactions* (P1), 
 - *Fraudes* (P2), 
 - *Abonnements* (P3), 
@@ -67,7 +73,7 @@ Chaque étoile a son propre diagramme (six diagrammes pour six processus) :
 - *Demandes de droit* (P5), 
 - *Incidents de Sécurité* (P6). 
 
-> Rappel : chaque processus métier a son propre grain. Les étoiles ne partagent aucune ligne, seulement des dimensions conformées (`DimDate`, `DimMerchant`, `DimCustomer`, `DimGeography`...), voir la matrice de bus \[D3-A\] (2.A.6).
+> Rappel : chaque processus métier a son propre *grain*. Les étoiles ne partagent aucune ligne, seulement des dimensions conformées (`DimDate`, `DimMerchant`, `DimCustomer`, `DimGeography`...), voir la matrice de bus \[D3-A, §2.A.6\].
 
 <div style="page-break-after: always;"></div>
 
