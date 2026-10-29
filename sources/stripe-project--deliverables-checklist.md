@@ -72,7 +72,7 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D3-A\] [*OLAP Kimball Analysis*](annexes/stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
 - \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-step-2--olap-annexe-b--dbml.dbml)
 - \[D3-C\] [*OLAP Conventions and Transformation Rules*](annexes/stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
-- \[D4-A\] [*NoSQL Supporting Notes*](annexes/stripe-step-3--nosql-annexe-a--supporting-notes.pdf)
+- \[D4-A\] [*NoSQL Storage Model Rationale*](annexes/stripe-step-3--nosql-annexe-a--storage-model-rationale.pdf)
 
 #### Ressources
 
