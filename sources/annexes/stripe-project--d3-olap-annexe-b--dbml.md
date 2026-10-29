@@ -16,7 +16,7 @@ tags:
 // Stripe - OLAP Physical Data Model
 // Version : v22
 // Format : DBML (Database Markup Language) - https://dbml.dbdiagram.io
-// Cas d'usage métier : NoSQL / Stripe Business Case
+// Cas d'usage métier : Stripe Business Case /  OLAP
 // Objectif : schéma en étoile, dénormalisé, optimisé pour les requêtes d'agrégation, l'analyse de séries temporelles et le reporting.
 // Devise de référence : EUR.
 // v09 : précision des montants - montants locaux en unités mineures (bigint), montants EUR en decimal(18,4), taux de référence en decimal(24,12).
@@ -919,4 +919,5 @@ Table AggSecurityIncidentMonthly {
     Une clé primaire exige des colonnes non nulles ; en PostgreSQL 15 et plus, l'index unique se déclare NULLS NOT DISTINCT.
   '''
 }
+
 ```
