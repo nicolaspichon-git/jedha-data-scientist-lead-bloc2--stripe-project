@@ -53,6 +53,7 @@ Le modèle ne partitionne aucune table et ne prévoit pas de mise en cache. Ces 
 ---
 
 <div style="page-break-after: always;"></div>
+
 ### D2.2. Vues globales
 
 #### D2.2.1. Groupes fonctionnels et dépendances
