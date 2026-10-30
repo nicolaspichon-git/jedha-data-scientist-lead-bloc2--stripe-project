@@ -227,22 +227,67 @@ Les valeurs que l'OLTP ne fournit pas telles quelles (segment client, regroupeme
 
 ### Couverture des exigences
 
-| # | Exigence \[D0\]                                       | Couverture                                          |
-| - | ----------------------------------------------------- | --------------------------------------------------- |
-| **BR2** | analyse de revenu, segmentation, conformité | Six étoiles couvrant chacun des besoins (D3.3)      |
-| **TR1** | schémas en étoile ou en flocon, tables pré-agrégées (OLAP) | Étoiles et dénormalisation assumée (D3.2, D3.3) ; tables d'agrégats (D3.4) |
-| **TR3** | scalabilité, indexation, partitionnement, mise en cache | Partitionnement par `date_key`, diffusion des dimensions, index ciblés (D3.5.3, D3.5.5, D3.5.8). **Mise en cache : non traitée.** |
+| # | Fonctionnalité | A/ | C/ | Sources |
+| --- | --- | --- | --- | --- |
+| F01.08 | Paiements, remboursements, rétro-facturations | D2 | 🟢 | P1 §D3.3.1 ; `is_refunded` et `refund_amount_*` (ETL-20), `is_chargeback` (ETL-21) ; \[D3-A\] §2.A.2 traite remboursement et litige comme attributs de l'issue d'une transaction. |
+| F01.09 | Gestion des abonnements | D2 | 🟢 | P3 `FactSubscriptionSnapshot` §D3.3.3 ; ETL-40 à ETL-44 ; `AggSubscriptionDailyMerchant` (ETL-50 à ETL-53). |
+| F02.01 | Requêtes analytiques complexes et efficaces | **D3**, D8 | 🟢 | §D3.2, §D3.3 (six étoiles), §D3.5 (huit techniques d'optimisation). |
+| F02.02 | Agrégation multidimensionnelle | **D3** | 🟢 | §D3.3 ; 17 dimensions conformées, matrice de bus \[D3-A\] §2.A.6 ; §D3.4. |
+| F02.03 | Schémas en étoile ou en flocon | **D3** | 🟢 | §D3.2 (étoile pure, dimensions indépendantes), §D3.3 ; \[D3-B\]. |
+| F02.04 | Tables pré-agrégées | **D3** | 🟢 | §D3.4 : sept tables d'agrégats, grain et usage définis ; \[D3-B\]. |
+| F02.05 | Optimisation des requêtes analytiques | **D3** | 🟢 | §D3.5.1 à §D3.5.8 : clés entières, `DimDate`, partitionnement, stockage colonnes, diffusion des dimensions, taux fixe, index ciblés. |
+| F02.06 | Faible latence pour les requêtes métier critiques | **D3** | 🟠 | §D3.4 (agrégats), §D3.5.3, §D3.5.8 ; aucune cible de latence, et les requêtes « critiques » ne sont pas définies. |
+| F02.07 | Analyse de séries temporelles | (BR2) | 🟢 | `DimDate` précalculée §D3.5.2 (comparaison période sur période), partitionnement par `date_key` §D3.5.3, instantanés périodiques \[D3-A\] §2.A.3. |
+| F02.08 | Jointures et sous-requêtes à grande échelle | (BR2) | 🟠 | §D3.5.5 (diffusion des dimensions), §D3.5.8 (index sur les clés de jointure) ; les sous-requêtes ne sont pas traitées. |
+| F02.09 | Analyse historique | (BR2) | 🟢 | SCD2 sur `DimMerchant`, `DimCustomer`, `DimPricingPlan`, `DimActor` (\[D3-A\] §2.A.4) ; version retenue par ETL-01 ; instantanés cumulatifs §D3.3.5 et §D3.3.6. |
+| F02.10 | Analyse ad hoc | (C2) | 🟠 | §D3.2 (étoile pure) et \[D3-A\] §2.A.6 (dimensions conformées) la rendent possible ; elle n'est nommée nulle part et aucun angle libre n'est documenté. |
+| F02.11 | Analytique quasi temps réel | (BR2) | 🟠 | §D3.4 : `AggRevenueDailyMerchant` sert un tableau de bord « quasi temps réel » ; la fréquence de recalcul des agrégats reste à définir (O-10). |
+| F02.12 | Restitution aux clients et aux parties prenantes internes | (C2) | 🟠 | §D3.3.1 : les deux audiences lisent la même table, `merchant_net_revenue_eur` et `stripe_revenue_eur` ; cloisonnement par RLS §D3.5.7 ; la lecture des lignes sans marchand par les rôles internes reste à définir (O-08). |
+| F02.13 | Analyse des revenus | D8 | 🟢 | P1 §D3.3.1 ; `AggRevenueDailyMerchant` et `AggRevenueMonthlyMerchantCountry` §D3.4 ; P3 pour le revenu récurrent (`mrr_eur`, ETL-40). |
+| F02.14 | Segmentation client | D8 | 🟠 | `DimCustomer.segment` (ETL-10, recalcul mensuel) ; seuils en hypothèse de conception (O-07) et aucun agrégat de segmentation. |
+| F02.15 | Suivi de la performance des produits | (C2) | 🟠 | `DimProduct` ; P1 couvre *Product Performance* (§D3.1, \[D3-A\] §2.A.2) ; seul `AggSubscriptionDailyMerchant` a un grain par produit, aucun agrégat de performance produit. |
+| F04.01 | Intégration entre OLTP, OLAP et NoSQL | D1, D5 | 🟠 | §D3.6 et \[D3-C\] §2.C.3 : règles de transformation OLTP → OLAP (ETL-01 à ETL-62) ; le système *NoSQL* n'est source d'aucune table. |
+| F04.03 | Circulation cohérente des données | D5 | 🟠 | ETL-03 (rechargement idempotent), ETL-62 (contrôle d'appartenance), rapprochement \[D3-C\] §2.C.1.3/4 ; le flux lui-même relève de \[D5\]. |
+| F04.04 | Traitement par lots | D5 | 🟠 | ETL-10 (évaluation mensuelle du segment), ETL-03 (rechargement par jour de `FactAuditEvent`), recalcul des jours concernés \[D3-C\] §2.C.3.6 ; aucune orchestration. |
+| F04.05 | Flux de données en continu | D5 | 🟠 | `ChangeAuditLog` est dit alimenté par *CDC* (§D3.3.4, \[D3-A\] §2.A.4) ; aucun flux continu n'est décrit côté entrepôt. |
+| F04.07 | Processus ETL/ELT | D5 | 🟢 | §D3.6 et \[D3-C\] §2.C.3 : 20 règles numérotées ETL-01 à ETL-62, citées dans les notes de \[D3-B\]. |
+| F04.08 | Transformation et enrichissement des données | D5 | 🟢 | \[D3-C\] §2.C.3 : segment client (ETL-10), regroupement d'actions (ETL-11), mesures calculées (ETL-20 à ETL-53) ; conversion de devise §2.C.1. |
+| F04.09 | Cohérence des données entre systèmes | D5 | 🟠 | Rapprochement `SUM(amount_minor)` avec l'OLTP (\[D3-C\] §2.C.1.3/4), commission jamais recalculée, ETL-62 ; l'OLTP reste la source de vérité. |
+| F04.10 | Fraîcheur des données | D5 | 🟠 | §D3.4 (« quasi temps réel ») ; compteurs provisoires \[D3-C\] §2.C.3.6 ; fréquence de recalcul des agrégats à définir (O-10). |
+| F04.12 | Résolution de conflits | D5 | 🟠 | Les écarts sont signalés comme anomalies de chargement et jamais corrigés (ETL-20, ETL-62) ; aucune règle de résolution. |
+| F04.13 | *Change Data Capture* | D5 | 🟠 | Cité pour la seule alimentation de `ChangeAuditLog` (§D3.3.4, \[D3-A\] §2.A.4), sans mécanisme ni portée. |
+| F04.15 | Vue globale et cohérente des données | (BR3) | 🟠 | Dimensions conformées et matrice de bus \[D3-A\] §2.A.6 : croiser revenu et incidents par marchand sans jointure artificielle ; vue limitée au périmètre analytique. |
+| F04.16 | Accessibilité pour les différents cas d'usage | (C4) | 🟠 | Six étoiles par processus métier (§D3.3) et agrégats répondant à une question déjà posée (§D3.4) ; aucune couche d'exposition ni de service. |
+| F05.01 | Montée en charge horizontale | (TR3) | 🟠 | §D3.5.4 (stockage orienté colonnes), §D3.5.5 (diffusion des dimensions, nœuds de calcul) ; moteur non tranché et aucun volume cible. |
+| F05.03 | Bases de données distribuées | (TR3) | 🟠 | §D3.5.4 cite *Redshift*, *BigQuery*, *Snowflake* et *ClickHouse*, §D3.5.5 suppose plusieurs nœuds ; \[D3-B\] cible *PostgreSQL* et aucune topologie n'est décrite. |
+| F05.05 | Partitionnement | (TR3) | 🟠 | §D3.5.3 : partitionnement par `date_key`, élagage de partitions, mensuel ou quotidien ; cité pour `FactTransaction` et `FactAuditEvent`, pas pour `FactFraudEvent`. |
+| F05.07 | Indexation | D4 | 🟢 | §D3.5.8 (clés de jointure, clés métier, `merchant_id` pour la RLS) ; blocs `Indexes` de chaque table dans \[D3-B\]. |
+| F06.03 | Contrôles d'accès (RBAC) | D6 | 🟠 | §D3.5.7 : RLS imposée par le moteur, assise sur `merchant_id` et non sur `merchant_key` ; les rôles internes et les lignes sans marchand restent à définir (O-08). |
+| F06.04 | Journalisation d'audit | D6 | 🟠 | P4 `FactAuditEvent` §D3.3.4, `DimActor`, `DimAuditAction` (ETL-11), ETL-60 à ETL-62 ; il s'agit des journaux de l'OLTP, pas des accès à l'entrepôt lui-même. |
+| F06.05 | Surveillance de l'utilisation des données | (C5) | 🟠 | P4 répond à « qui a fait quoi, quand, sur quoi » (\[D3-A\] §2.A.3) ; `AggComplianceDailyMerchant` compte accès, accès sensibles, tentatives non autorisées, acteurs et exports ; ses règles ETL restent à écrire (O-10). |
+| F06.06 | Surveillance en temps réel des failles de sécurité | D6 | 🟠 | P6 `FactSecurityIncident` §D3.3.6 et `AggSecurityIncidentMonthly` : analyse a posteriori ; aucun alerting, et les règles ETL manquent (O-09). |
+| F07.01 | Conformité réglementaire du stockage et du traitement | D6 | 🟠 | P4, P5 et P6 ; `DimRegulation.response_deadline_days`, `is_within_deadline`, `is_within_72h_deadline` ; ni durée de conservation ni effacement sur l'entrepôt. |
+| F07.02 | RGPD | (TR5) | 🟠 | L'adresse IP n'est jamais copiée dans l'OLAP (§D3.3.1, \[D3-A\] §2.A.4) ; P5 modélise les demandes de droit ; ni rétention ni propagation de l'effacement. |
+| F07.03 | PCI-DSS | (TR5) | 🟢 | `DimPaymentMethod` : type et réseau de la carte, jamais le PAN (\[D3-A\] §2.A.4). |
+| F07.04 | CCPA | (C5) | 🟠 | `DimRegulation` et P5 couvrent RGPD et CCPA (§D3.1, \[D3-A\] §2.A.2) ; `AggDataSubjectRequestMonthly` sert le rapport RGPD/CCPA ; aucune règle propre au CCPA. |
+| F07.06 | Contrôles de conformité automatisés | D6 | 🟠 | Indicateurs `is_within_deadline` et `is_within_72h_deadline` (\[D3-A\] §2.A.5) ; leurs règles de calcul ne sont pas écrites (O-09). |
+| F07.07 | Reporting de conformité | D6 | 🟠 | `AggComplianceDailyMerchant`, `AggDataSubjectRequestMonthly`, `AggSecurityIncidentMonthly` §D3.4 ; leurs règles ETL ne sont pas écrites (O-10). |
+| F08.01 | Modèles de détection de fraude en temps réel | D4, D7, D8 | 🟠 | P2 `FactFraudEvent` §D3.3.2, `DimFraudRiskLevel`, `anomaly_score` (ETL-22, ETL-30), `is_confirmed_fraud` (ETL-32), `AggFraudDailyMerchant` : analyse a posteriori des scores, le scoring est hors de \[D3\]. |
+| F09.01 | Conception des modèles de données par système | D1, D2, **D3**, D4 | 🟢 | \[D3\] pour le schéma, \[D3-A\] pour l'analyse de *Kimball*, \[D3-B\] pour le modèle physique (30 tables), \[D3-C\] pour les conventions et les règles de transformation. |
 
-La mise en cache demandée par *TR3* \[D0\] n'est pas traitée dans ce document : D3.5 couvre l'indexation, le partitionnement et la diffusion des dimensions, pas la mise en cache (\[D0\] §0.4.3 ne l'exclut que pour l'OLTP).
+> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D3 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
 
 ---
 
+<div style="page-break-after: always;"></div>
+
 ### Références
 
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+- 
 #### Annexes
 - \[D3-A\] [OLAP Kimball Analysis](stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
 - \[D3-B\] [OLAP Physical Data Model](stripe-project--d3-olap-annexe-b--dbml.pdf)
 - \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)
 
-#### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

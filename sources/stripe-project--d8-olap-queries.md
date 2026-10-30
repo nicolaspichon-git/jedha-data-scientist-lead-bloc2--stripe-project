@@ -24,10 +24,7 @@ tags:
 
 ### D8.2.1. Contexte
 
-Ce document propose quelques exemples de requêtes sur les données OLAP pour chacun des processus métiers (cf. ci-dessous).
-L'objectif est de vérifier que chaque processus est exploitable sans jointure OLTP.
-
-Quelques requêtes supplémentaires illustre le requêtage sur des tables d'agrégats avec ou sans croisement des faits. 
+Ce document propose quelques exemples de requêtes sur les données OLAP pour chacun des processus métiers (cf. ci-dessous). L'objectif est de vérifier que chaque processus est exploitable sans jointure OLTP. Quelques requêtes supplémentaires illustrent le requêtage sur des tables d'agrégats avec ou sans croisement des faits. 
 
 ##### Processus métiers cibles (rappel)
 - P1 : Traitement d'un paiement
@@ -423,12 +420,59 @@ ORDER BY merchant, year, month;
 
 Croisement de deux faits par leurs dimensions conformées (`DimMerchant`, `DimDate`) \[D3-A\] (2.A.6) : chaque fait est agrégé séparément au grain (marchand, mois), puis les résultats sont joints. Joindre les deux faits ligne à ligne multiplierait les montants par le nombre d'incidents. Les incidents sans marchand (`merchant_key` nul) n'y figurent pas.
 
+---
+
+<div style="page-break-after: always;"></div>
+
+### Couverture des exigences
+
+D'après \[D0, §0.2.8\].
+
+| # | Fonctionnalité | A/ | C/ | Sources |
+| --- | --- | --- | --- | --- |
+| F01.09 |Gestion des abonnements | D2 |🟢 | \[D8.2\] P3.1 (revenus récurrents par marchand) et P3.2 (clients à risque de désabonnement).|| F02.01 | Requêtes analytiques complexes et efficaces | D3, **D8** | 🟢 | \[D8.2\] : quatorze requêtes couvrant les six processus métiers, avec CTE enchaînées, fonctions de fenêtrage (`SUM() OVER`) et `DISTINCT ON`. |
+| F02.02 | Agrégation multidimensionnelle | D3 | 🟢 | \[D8.2\] : agrégations par mois et marchand (P1.1), par produit et devise (P1.2), par niveau de risque (P2.2), par segment (P3.2), par réglementation (P5.1), par sévérité (P6.1). |
+| F02.03 | Schémas en étoile ou en flocon | D3 | 🟢 | \[D8.2\] §D8.2.1 : l'objectif annoncé est de vérifier que chaque processus est exploitable sans jointure OLTP ; les six étoiles sont requêtées une à une. |
+| F02.04 | Tables pré-agrégées | D3 | 🟢 | \[D8.2\] §D8.2.8 : A.1 sert un tableau de bord marchand depuis un agrégat, A.2 croise deux faits agrégés. |
+| F02.05 | Optimisation des requêtes analytiques | D3 | 🟢 | \[D8.2\] conventions : filtres portant sur `date_key` avec une borne calculée une fois, jamais une fonction appliquée à une colonne, pour préserver l'élagage de partitions. |
+| F02.06 | Faible latence pour les requêtes métier critiques | D3 | 🟠 | \[D8.2\] A.1 : le tableau de bord marchand est servi par un agrégat plutôt que par le fait atomique ; aucune mesure ni cible de temps d'exécution. |
+| F02.07 | Analyse de séries temporelles | (BR2) | 🟢 | \[D8.2\] P1.1 (douze derniers mois civils, mois partiel compris), A.1 (trente derniers jours), A.2 (par mois) ; bornes en UTC. |
+| F02.08 | Jointures et sous-requêtes à grande échelle | (BR2) | 🟢 | \[D8.2\] P1.2 : trois CTE enchaînées (`revenue`, `ranked`, `top_products`) avec fonction de fenêtrage ; jointure de la version courante de la dimension par clé métier dans la plupart des requêtes. |
+| F02.09 | Analyse historique | (BR2) | 🟢 | \[D8.2\] conventions SCD2 : les deux lectures possibles (attribut à l'événement, attribut actuel) sont explicitées, et le regroupement se fait toujours par clé métier, jamais par clé de substitution ni par libellé. |
+| F02.10 | Analyse ad hoc | (C2) | 🟠 | \[D8.2\] : les quatorze requêtes démontrent la souplesse du modèle en étoile ; aucune n'est présentée comme exploratoire et aucun outil d'exploration n'est évoqué. |
+| F02.11 | Analytique quasi temps réel | (BR2) | 🟠 | \[D8.2\] A.1 : tableau de bord marchand sur les trente derniers jours servi par l'agrégat quotidien ; la fraîcheur de cet agrégat relève de \[D5\]. |
+| F02.12 | Restitution aux clients et aux parties prenantes internes | (C2) | 🟢 | \[D8.2\] P1.1 : revenus nets des marchands et commissions *Stripe* lus sur la même ligne de fait, sans recalculer l'un à partir de l'autre. |
+| F02.13 | Analyse des revenus | **D8** | 🟢 | \[D8.2\] P1.1 (revenus mensuels nets et commissions), P1.2 (revenu par produit), P3.1 (revenus récurrents), A.1 et A.2. |
+| F02.14 | Segmentation client | **D8** | 🟢 | \[D8.2\] P3.2 : clients à risque de désabonnement **par segment**, le segment venant de `DimCustomer` (ETL-10). |
+| F02.15 | Suivi de la performance des produits | (C2) | 🟢 | \[D8.2\] P1.2 : top-10 des produits par revenu, tous marchands confondus, avec le détail par devise de transaction. |
+| F04.01 | Intégration entre OLTP, OLAP et NoSQL | D1, D5 | 🟠 | \[D8.2\] §D8.2.1 : vérifier que chaque processus est exploitable sans jointure OLTP |
+| F04.09 | Cohérence des données entre systèmes | D5 | 🟠 | \[D8.2\] conventions : UTC partout, définition de « transaction aboutie » reprise d'ETL-10, rétro-facturations non déduites du revenu conformément à ETL-21 ; aucune requête de réconciliation avec l'OLTP. |
+| F04.15 | Vue globale et cohérente des données | (BR3) | 🟠 | \[D8.2\] A.2 : revenu et incidents de sécurité croisés par marchand et par mois, ce que permettent les dimensions conformées (\[D3-A\] §2.A.6) ; vue limitée au périmètre analytique. |
+| F05.05 | Partitionnement | (TR3) | 🟠 | \[D8.2\] conventions : les filtres sont écrits pour préserver l'élagage de partitions |
+| F06.04 | Journalisation d'audit | D6 | 🟢 | \[D8.2\] P4.2 : qui a consulté les données d'un client et quand ; \[D8.2\] P4.1 : tentatives d'accès non autorisées par acteur. |
+| F06.05 | Surveillance de l'utilisation des données | (C5) | 🟢 | \[D8.2\] P4.1 (tentatives d'accès non autorisées par acteur) et P4.2 |
+| F06.06 | Surveillance en temps réel des failles de sécurité | D6 | 🟠 | \[D8.2\] P6.1 (taux de respect du délai de notification par sévérité) et P6.2 (incidents par marchand et par type) : analyse a posteriori, sans alerting |
+| F07.01 | Conformité réglementaire du stockage et du traitement | D6 | 🟢 | \[D8.2\] P5.1, P5.2 et P6.1. |
+| F07.02 | RGPD | (TR5) | 🟢 | \[D8.2\] P5.1 (taux de respect des délais légaux par réglementation) et P5.2 |
+| F07.04 | CCPA | (C5) | 🟠 | \[D8.2\] P5.1 groupe par réglementation, ce qui couvre RGPD et CCPA ensemble ; aucune requête propre au CCPA. |
+| F07.06 | Contrôles de conformité automatisés | D6 | 🟢 | \[D8.2\] P5.1, P5.2, P6.1 : les indicateurs de délai annoncés par \[D3\] (`is_within_deadline`, `is_within_72h_deadline`) sont effectivement calculés par des requêtes. |
+| F07.07 | Reporting de conformité | D6 | 🟢 | \[D8.2\] P4.1, P5.1 et P6.1 : les requêtes qui produisent les rapports opposables annoncés par \[D5\] §D5.9.4. |
+| F08.01 | Modèles de détection de fraude en temps réel | D4, D7, **D8** | 🟢 | \[D8.2\] P2.1 et P2.2 : analyse a posteriori des évaluations et des fraudes confirmées. |
+| F09.06 | Jeu de requêtes SQL et NoSQL | **D8** | 🟢 | \[D8.2\] : quatorze requêtes analytiques |
+
+> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D8/2 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
+
+---
+
 ### Références
+
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+
 #### Livrables
 - \[D3\] [OLAP System Schema Design](stripe-step-2--olap-design.pdf)
+
 #### Annexes
 - \[D3-A\] [OLAP Kimball Analysis](stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
 - \[D3-B\] [OLAP Physical Data Model](stripe-step-2--olap-annexe-b--dbml.dbml)
 - \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
-#### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)

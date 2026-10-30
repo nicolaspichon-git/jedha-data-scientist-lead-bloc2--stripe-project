@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -19,7 +19,7 @@ tags:
 # 3. NoSQL Data System
 ## D8.3. NoSQL Queries Examples
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D8.3 : NoSQL Queries / v08 --- 2026/11/05.*
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D8.3 : NoSQL Queries / v09 --- 2026/11/05.*
 ---
 
 ### D8.3.1. Contexte
@@ -51,7 +51,6 @@ db.event_logs.find({
 }).sort("timestamp", -1).limit(50)
 ```
 
-
 Sert l'index `{ level: 1, timestamp: -1 }` - le motif d'accès dominant de la collection .
 
 #### D8.3.2.2. Reconstitution du parcours d'une transaction précise
@@ -62,11 +61,11 @@ db.event_logs.find({
 }).sort("timestamp", 1)
 ```
 
-Sert l'index *sparse* `{ transaction_id: 1 }` (la propriété "sparse" de l'index prend en compte le fait que car la majorité des logs n'ont pas le champ `transaction_id`).
+Sert l'index *sparse* `{ transaction_id: 1 }` (la propriété "sparse" de l'index prend en compte le fait que la majorité des logs n'ont pas le champ `transaction_id`).
 
 ### D8.3.3. Collection `user_sessions`
 
-#### Historique de sessions d'un client
+#### D8.3.3.1. Historique de sessions d'un client
 
 ```python
 db.user_sessions.find({ 
@@ -76,7 +75,9 @@ db.user_sessions.find({
 
 Sert  l'index `{ customer_id: 1, started_at: -1 }` (cf. §D4.6).
 
-#### Retrouver la session ayant mené à une transaction précise
+<div style="page-break-after: always;"></div>
+
+#### D8.3.3.2. Retrouver la session ayant mené à une transaction précise
 
 ```python
 db.user_sessions.find_one({ 
@@ -84,8 +85,7 @@ db.user_sessions.find_one({
 })
 ```
 
-Sert l'index multikey `{ "events.metadata.transaction_id": 1 }` — nécessaire précisément
-parce que `transaction_id` est imbriqué dans le tableau `events`, pas un champ racine.
+Sert l'index multikey `{ "events.metadata.transaction_id": 1 }` - nécessaire parce que `transaction_id` est imbriqué dans le tableau `events`.
 
 ### D8.3.4. Collection `ml_features`
 
@@ -97,7 +97,7 @@ db.ml_features.find_one(
 )
 ```
 
-Seule requête qui compte vraiment pour cette collection (cf. §D4.5.3) : une lecture par clé
+Seule requête qui compte vraiment pour cette collection (cf. §D4.5.4) : une lecture par clé
 primaire, sans jointure ni agrégation (c'est ce qui permet à la décision de fraude de s'exécuter
 quelques millisecondes).
 
@@ -147,6 +147,8 @@ db.merchant_config.find_one(
 
 L'unique motif d'accès de la collection `merchant_config` est un accès par clé primaire seule. La lecture d'un cache aussi rapide qu'un accès direct.
 
+<div style="page-break-after: always;"></div>
+
 #### D8.3.6.2. Vérification de l'activation d'une fonctionnalité 
 
 ```python
@@ -159,10 +161,37 @@ db.merchant_config.find_one(
 Même motif que ci-dessus, avec projection pour ne renvoyer que le champ utile — pertinent
 quand cette vérification a lieu à haute fréquence sur le chemin de décision applicatif.
 
+---
+
+<div style="page-break-after: always;"></div>
+
+### Couverture des exigences
+
+D'après \[D0, §0.2.8\].
+
+| # | Fonctionnalité | A/ | C/ | Sources |
+|---|---|---|---|---|
+|F03.01|Stockage et traitement de données non structurées et semi-structurées|D4|🟠|\[D8.3\] : dix requêtes sur les cinq collections ; le modèle de stockage relève de [D4].|
+|F03.06|Requêtage flexible des données imbriquées|D4, **D8**|🟢|\[D8.3\] §D8.3.3 : `events.metadata.transaction_id`, niché à deux niveaux dans un tableau, servi par un index _multikey_ ; §D8.3.4.2 : tri sur `model_scores.fraud_v3` ; §D8.3.5.2 : `$text` sur `content.text`.|
+|F03.07|Récupération efficace des données|(TR1)|🟢|\[D8.3\] §D8.3.4.1 : lecture par clé primaire, sans jointure ni agrégation, pour que la décision de fraude s'exécute en quelques millisecondes ; §D8.3.6.1 et §D8.3.6.2 : accès par `_id` seul, avec projection.|
+|F03.08|Gestion des relations dans le NoSQL|D4|🟠|\[D8.3\] §D8.3.2.2 : reconstitution du parcours d'une transaction par la référence `transaction_id`, servie par un index _sparse_ ; la référence reste logique, sans intégrité garantie.|
+|F03.09|Journaux, retours clients, données d'interaction|D4|🟢|\[D8.3\] §D8.3.2 (`event_logs`), §D8.3.3 (`user_sessions`), §D8.3.5 (`customer_feedback`) : chaque collection a ses deux requêtes caractéristiques.|
+|F04.01|Intégration entre OLTP, OLAP et NoSQL|D1, D5|🟠|\[D8.3\] §D8.3.2.2 et §D8.3.3 : rapprochement par `transaction_id`, clé métier de l'OLTP ; aucune requête ne traverse deux systèmes.|
+|F05.07|Indexation|D4|🟢| \[D8.3\] : chaque requête nomme son index (_sparse_, _multikey_, texte, composé) |
+|F07.02|RGPD|(TR5)|🟢|\[D8.3\] §D8.3.3 : historique de sessions par `customer_id`, index servant aussi le droit d'accès.|
+|F08.01|Modèles de détection de fraude en temps réel|D4, D7, **D8**|🟢|\[D8.3\] §D8.3.4.1 : lecture d'inférence sur le chemin critique ; §D8.3.4.2 : clients à score élevé pour un marchand (_alerting_) ;|
+|F08.04|Intégration des modèles au sein du NoSQL|D4, D7|🟠| \[D8.3\] §D8.3.4 : le magasin de features est interrogé comme toute autre collection, par clé ou par index sur `model_scores.fraud_v3` ; l'intégration elle-même relève de [D4] et [D5].|
+|F09.06|Jeu de requêtes SQL/NoSQL|**D8**|🟢| \[D8.3\] : dix requêtes _MongoDB_|
+
+> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D8/3 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
+
+---
+
 ### Références
+
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
 
 #### Livrables
 - \[D4\] [NoSQL Data Model](stripe-project--d4-nosql-data-model.pdf)
 
-#### Ressources
-- \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)

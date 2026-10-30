@@ -1,5 +1,5 @@
 ---
-version: v03
+version: v05
 locale: fr
 tags:
   - _RNCP38777
@@ -16,7 +16,7 @@ STRIPE PROJECT
 
 # 0. Introduction
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Introduction / v03 --- 2026/11/05.*
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Introduction / v05 --- 2026/11/05.*
 
 ---
 
@@ -89,8 +89,8 @@ Les exigences d'affaire de l'exercice sont les suivantes :
 | **BR1** | Intégrité transactionnelle           | Transactional Integrity (OLTP)          |
 | **BR2** | Analytique évolutive et efficace     | Scalable and Efficient Analytics (OLAP) |
 | **BR3** | Gestion flexible des données         | Flexible Data Management (NoSQL)        |
-| **BR4** | Intégration et cohérence des données | Data Integration Across Systems         |
-| **BR5** | Sécurité et conformité               | Security & Compliance                   |
+| **BR4** | Intégration et cohérence des données | Data Integration and Consistency        |
+| **BR5** | Sécurité et conformité               | Security and Compliance                 |
 
 #### 0.2.4.2. Descriptions détaillées
 
@@ -123,7 +123,7 @@ Les exigences techniques de l'exercice sont les suivantes :
 | **TR2** | Architecture du pipeline de données               | Data Pipeline Architecture               |
 | **TR3** | Optimisation de l'évolutivité et des performances | Scalability and Performance Optimization |
 | **TR4** | Cohérence et synchronisation des données          | Data Consistency and Synchronization     |
-| **TR5** | Sécurité et conformité                            | Security & Compliance                    |
+| **TR5** | Sécurité et conformité                            | Security and Compliance                  |
 | **TR6** | Analytique avancée et machine learning            | Advanced Analytics and Machine Learning  |
 
 #### 0.2.5.2. Descriptions détaillées
@@ -184,7 +184,7 @@ Données agrégées et historiques utilisées pour le reporting et l'analyse. Ch
 - Données d'analyse de la fraude
 - Journaux de conformité et d'audit
 
-##### DS3. U/S and S/S Data
+##### DS3. Unstructured and Semi-Structured Data
  Données collectées depuis diverses sources, telles que les journaux, les interactions clients et les données générées par des machines. Champs inclus :
 - Données de journaux (journaux d'erreurs, journaux d'accès)
 - Données d'interaction utilisateur (données de clics, données de session)
@@ -237,36 +237,141 @@ Un ensemble de requêtes SQL et NoSQL démontrant comment des questions métier 
 
 ### 0.2.8. Traçabilité des exigences
 
-#### 0.2.8.1. Couverture des enjeux stratégiques par les exigences d'affaire
+L'ensemble des fonctionnalités posées par les enjeux stratégiques (C), les exigences d'affaire (BR), les exigences techniques (TR) et les livrables (D) est collecté dans le tableau ci-dessous. On a 84 fonctionnalités réparties en 9 familles.
 
-| #      | Business Objective              | Business Requirements | 
-| ------ | ------------------------------- | --------------------- | 
-| **C1** | Complex Transactional Workloads | BR1                   |
-| **C2** | Advanced Analytics Requirements | BR2                   | 
-| **C3** | Handling U/S and S/S Data       | BR3                   | 
-| **C4** | Data Integration Across Systems | BR4                   | 
-| **C5** | Security and Compliance         | BR5                   | 
+| #      | Fonctionnalité                | C   | BR  | TR  | D   |
+| ------ | ----------------------------- | --- | --- | --- | --- |
+| **F01**| **Charges transactionnelles** |     |     |     |     |
+| F01.01 | Volume transactionnel élevé | C1 | BR1 | TR3 (gén.) | — |
+| F01.02 | Latence transactionnelle minimale | C1 | BR1 | TR3 (gén.) | — |
+| F01.03 | Cohérence et intégrité transactionnelle (ACID) | C1 | BR1 | TR1/OLTP | D2 |
+| F01.04 | Schémas normalisés | — | — | TR1/OLTP | D2 |
+| F01.05 | Transactions multi—documents | — | BR1 | — | — |
+| F01.06 | Reprise après sinistre | — | BR1 | — | — |
+| F01.07 | Capacité à accueillir de nouvelles fonctionnalités | C1 | — | — | — |
+| F01.08 | Paiements, remboursements, rétro—facturations | C1 | — | — | D2 (impl.) |
+| F01.09 | Gestion des abonnements | C1 | — | — | D2 (impl.) |
+| **F02**| **Analytique** |     |     |     |     |
+| F02.01 | Requêtes analytiques complexes et efficaces | C2 | BR2 | TR1/OLAP | D3, D8 |
+| F02.02 | Agrégation multidimensionnelle | — | BR2 | TR1/OLAP | D3 |
+| F02.03 | Schémas en étoile ou en flocon | — | — | TR1/OLAP | D3 |
+| F02.04 | Tables pré—agrégées | — | — | TR1/OLAP | D3 |
+| F02.05 | Optimisation des requêtes analytiques | — | BR2 | TR1/OLAP, TR3 | D3 |
+| F02.06 | Faible latence pour les requêtes métier critiques | — | BR2 | TR3 (gén.) | D3 (impl.) |
+| F02.07 | Analyse de séries temporelles | — | BR2 | — | — |
+| F02.08 | Jointures et sous—requêtes à grande échelle | — | BR2 | — | — |
+| F02.09 | Analyse historique | — | BR2 | — | — |
+| F02.10 | Analyse ad hoc | C2 | — | — | - |
+| F02.11 | Analytique quasi temps réel | C2 | BR2 | - | - |
+| F02.12 | Restitution aux clients et aux parties prenantes internes | C2 | - | - | - |
+| F02.13 | Analyse des revenus | C2 | - | - | D8 |
+| F02.14 | Segmentation client | C2 | - | - | D8 |
+| F02.15 | Suivi de la performance des produits | C2 | - | - | - |
+| **F03**| **Données non structurées** |     |     |     |     |
+| F03.01 | Stockage et traitement de données non structurées et semi-structurées | C3 | BR3 | TR1/NoSQL | D4 |
+| F03.02 | Conception de schéma flexible | - | BR3 | TR1/NoSQL | D4 |
+| F03.03 | Type de données JSON | - | BR3 | - | D4 (impl.) |
+| F03.04 | Type de données XML | - | BR3 | - | - |
+| F03.05 | Données binaires | - | BR3 | - | - |
+| F03.06 | Requêtage flexible des données imbriquées | C3 | BR3 | TR1/NoSQL | D4, D8 |
+| F03.07 | Récupération efficace des données | - | - | TR1/NoSQL | - |
+| F03.08 | Gestion des relations dans le NoSQL | - | - | - | D4 |
+| F03.09 | Journaux, retours clients, données d'interaction | C3 | - | - | D4 (impl.) |
+| F03.10 | Collecte depuis le site web et les applications mobiles | C3 | - | - | - |
 
-#### 0.2.8.2. Couverture des exigences d'affaire par les exigences technique
+<div style="page-break-after: always;"></div>
 
-| #       | Business Requirement                 | Technical Requirements | Livrables |
-| ------- | ------------------------------------ | ---------------------- | --------- |
-| **BR1** | Intégrité transactionnelle           | TR1/OLTP, TR3     | D1, D2, D8     |
-| **BR2** | Analytique évolutive et efficace     | TR1/OLAP, TR3     | D1, D3, D8     |
-| **BR3** | Gestion flexible des données         | TR1/NoSQL, TR6    | D1, D4, D7, D8 |
-| **BR4** | Intégration et cohérence des données | TR2, TR4          | D1, D5         |
-| **BR5** | Sécurité et conformité               | TR5               | D1, D6         |
+| #      | Fonctionnalité                | C   | BR  | TR  | D   |
+| ------ | ----------------------------- | --- | --- | --- | --- |
+| **F04**| **Architecture, intégration et pipelines** |     |     |     |     |
+| F04.01 | Intégration entre OLTP, OLAP et NoSQL | C3, C4 | BR3, BR4 | TR2 | D1, D5 |
+| F04.02 | Architecture de données unifiée | C4 | BR4 | TR2 | D1 |
+| F04.03 | Circulation cohérente des données | C4 | BR4 | TR2 | D5 |
+| F04.04 | Traitement par lots | - | BR4 | TR2 | D5 |
+| F04.05 | Flux de données en continu | - | BR4 | TR2 | D5 |
+| F04.06 | Synchronisation en temps réel | - | BR1, BR4 | TR4 | D5 |
+| F04.07 | Processus ETL/ELT | - | BR4 | TR2 | D5 |
+| F04.08 | Transformation et enrichissement des données | - | BR4 | TR2 | D5 |
+| F04.09 | Cohérence des données entre systèmes | C4 | BR4 | TR4 | D5 |
+| F04.10 | Fraîcheur des données | C4 | BR4 (impl.) | TR4 | D5 |
+| F04.11 | Cohérence à terme (*eventual consistency*) | - | - | TR4 | - |
+| F04.12 | Résolution de conflits | - | - | TR4 | D5 (impl.) |
+| F04.13 | *Change Data Capture* | - | - | TR4 | D5 (impl.) |
+| F04.14 | Outils de streaming et d'orchestration (*Kafka*, *Airflow*) | - | - | TR2 | D5 |
+| F04.15 | Vue globale et cohérente des données | - | BR3 | - | - |
+| F04.16 | Accessibilité pour les différents cas d'usage | C4 | - | - | - |
+| **F05**| **Évolutivité et performance** |     |     |     |     |
+| F05.01 | Montée en charge horizontale | C1 | BR1 (part.) | TR3 | - |
+| F05.02 | Haute disponibilité | C1 | - | TR3 | - |
+| F05.03 | Bases de données distribuées | - | BR1 | TR3 | - |
+| F05.04 | Sharding | - | - | TR3 | - |
+| F05.05 | Partitionnement | - | - | TR3 | - |
+| F05.06 | Mise en cache | - | - | TR3 | - |
+| F05.07 | Indexation | - | - | TR3 | D4 |
+| **F06**| **Sécurité** |     |     |     |     |
+| F06.01 | Chiffrement des données | C5 | BR5 | TR5 | D6 |
+| F06.02 | Distinction du repos et du transit | C5 | - | - | - |
+| F06.03 | Contrôles d'accès (RBAC) | C5 | BR5 | TR5 | D6 |
+| F06.04 | Journalisation d'audit | - | BR5 | TR5 | D6 |
+| F06.05 | Surveillance de l'utilisation des données | C5 | - | - | - |
+| F06.06 | Surveillance en temps réel des failles de sécurité | - | BR5 | - | D6 |
+| F06.07 | Cadre de sécurité et outils de surveillance | - | - | TR5 | D6 |
+| **F07**| **Conformité** |     |     |     |     |
+| F07.01 | Conformité réglementaire du stockage et du traitement | C5 | BR5 | TR5 | D6 |
+| F07.02 | RGPD | C5 | - | TR5 | - |
+| F07.03 | PCI-DSS | C5 | - | TR5 | - |
+| F07.04 | CCPA | C5 | - | - | - |
+| F07.05 | Pluralité des juridictions | - | BR5 | - | - |
+| F07.06 | Contrôles de conformité automatisés | - | BR5 | TR5 | D6 |
+| F07.07 | Reporting de conformité | C2 | BR5 | TR5 | D6 |
 
-#### 0.2.8.3.  Traçabilité des exigences techniques
+<div style="page-break-after: always;"></div>
 
-| #       | Technical Requirement                       | Business Requirements | Livrables          |
-| ------- | ------------------------------------------- | --------------------- | ------------------ |
-| **TR1** | Conception des modèles de données           | BR1, BR2, BR3         | D1, D2, D3, D4, D8 |
-| **TR2** | Architecture du pipeline de données         | BR4                   | D1, D5             |
-| **TR3** | Évolutivité & optimisation des performances | BR1, BR2              | D1, D2, D3, D8     |
-| **TR4** | Cohérence & synchronisation des données     | BR4                   | D1, D5             |
-| **TR5** | Sécurité & conformité                       | BR5                   | D1, D6             |
-| **TR6** | Analytique avancée & machine learning       | BR3                   | D1, D4, D7         |
+| #      | Fonctionnalité                | C   | BR  | TR  | D   |
+| ------ | ----------------------------- | --- | --- | --- | --- |
+| **F08**| **Machine learning** |     |     |     |     |
+| F08.01 | Modèles de détection de fraude en temps réel | C1 (ex.), C3 | - | TR6 | D4, D7, D8 |
+| F08.02 | Modèles de personnalisation client | C3 | - | TR6 | D7 |
+| F08.03 | Analyse prédictive | C3 | - | - | - |
+| F08.04 | Intégration des modèles au sein du NoSQL | - | - | TR6 | D4, D7 |
+| F08.05 | Extraction de caractéristiques | - | - | TR6 | D7 |
+| F08.06 | Déploiement des modèles | - | - | TR6 | D7 |
+| F08.07 | Suivi de la performance des modèles et mise à jour | - | - | TR6 | D7 |
+| **F09**| **Production documentaire** |     |     |     |     |
+| F09.01 | Conception des modèles de données par système | - | - | TR1 | D1, D2, D3, D4 |
+| F09.02 | Diagramme d'architecture complet (flux, pipelines, modèles) | - | - | - | D1 |
+| F09.03 | Document d'architecture du pipeline (outils, technologies) | - | - | TR2 | D5 |
+| F09.04 | Plan de sécurité et de conformité | - | - | TR5 | D6 |
+| F09.05 | Stratégie d'intégration du machine learning | - | - | TR6 | D7 |
+| F09.06 | Jeu de requêtes SQL et NoSQL | - | - | - | D8 |
+
+> _Légende : "—" : la fonctionnalité n'est posée par aucune source de cette catégorie ; "(gén.)" : la source la couvre par une formulation générique sans la nommer ; "(impl.)" : la source la couvre implicitement par sa nature ; "(part.)" : la source la couvre partiellement ; "(ex.)" : la source la cite la fonctionnalité à titre d'exemple (sans l'exiger)._
+
+##### Synthèse
+
+On retient les deux points marquants suivants :
+
+###### Fonctionnalités complètement tracées (de l'enjeu au livrable)
+15% des fonctionnalités ont une chaîne de traçabilité  complète - de l'enjeu au livrable :
+- *OLTP* :
+	- Cohérence transactionnelle (D2) ; 
+- *OLAP* : 
+	- Requêtes analytiques (D3, D8) ;
+- *NoSQL* : 
+	- Stockage et requêtage NoSQL (D4, D8) ;
+- *Architecture, Intégration et Pipelines* :
+	- Intégration entre systèmes (D1, D5), architecture unifiée (D1), circulation, cohérence et fraicheur des données (D5) ;
+- *Sécurité & Conformité* :
+	- Chiffrement (D6), contrôles d'accès (D6), conformité réglementaire (D6).
+
+###### Fonctionnalités non exigées dans les livrables  :
+38% des fonctionnalités présentées ne sont portées par aucun livrable :
+- *Evolutivité et performance* :
+	- Montée en charge, haute disponibilité, bases distribuées, sharding, partitionnement, mise en cache, latence et volume transactionnels (TR3) ;
+- *Capacités d'usage* : 
+	- Analyse ad hoc, restitution aux clients et aux parties prenantes internes, suivi de la performance des produits, accessibilité par cas d'usage, vue globale et cohérente des données ;
+- *Propriétés transactionnelles avancées* :
+	- Transactions multi-documents, reprise après sinistre, séries temporelles, analyse historique, jointures et sous-requêtes.
 
 ---
 
@@ -385,13 +490,15 @@ Cas d'utilisation pris en compte dans l'exercice :
 	- pas de produits ni de services annexes ;
 - Intégration du machine learning : 
 	- étude de cas des modèles de scoring de fraude, 
-	- description succincte des modèles de personnalisation et d'analyse prédictive (exigés dans les spécification du *business case* \[R0\] mais non traités) ; 
+	- description succincte des modèles de personnalisation et d'analyse prédictive (exigés dans les spécifications du *business case* \[R0\] mais non traités) ; 
 - Scalabilité horizontale :
 	- OLTP : l'aspect *distribué* de l'architecture de données n'est pas pris en compte _dans le modèle transactionnel_ :
 		- SGBD centralisé (cible : *PostgreSQL*),
 		- pas de partitionnement, 
 		- pas de sharding,
 		- pas de mise en cache.
+- Données non structurées et semi structurées :
+	- NoSQL : on ne prend en compte que les données de type JSON (pas de XML, pas de binaire).
 - Mise en oeuvre :
 	- les architectures, pipelines et modèles proposés ne sont pas vérifiés par une implémentation. 
 	

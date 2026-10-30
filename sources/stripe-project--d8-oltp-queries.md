@@ -262,15 +262,29 @@ ORDER BY l.occurred_at DESC;
 
 ---
 
+<div style="page-break-after: always;"></div>
+
 ### Couverture des exigences
 
-| #                | Exigence \[D0\]                 | Couverture                           | État               |    
-| ---------------- | ------------------------------- | ------------------------------------ | ------------------ |
-| **BR1**          | intégrité&nbsp;transactionnelle | D8.1.2.3 (idempotence) ;             | 🟠<br/>(à étendre) |    
-|                  |                                 | intégrité vérifiée par FK composites |                    |    
-| **BR1/TR1/OLTP** | latence&nbsp;minimale           | accès par clé ou par index sélectif  | 🟢                 |    
-| **BR5/TR5**      | conformité,&nbsp;audit          | D8.1.2.5 (échéances RGPD) ;          | 🟢                 |    
-|                  |                                 | D8.1.2.6 (qui accède à quoi)         |                    |     
+D'après \[D0, §0.2.8\].
+
+| # | Fonctionnalité | A/ | C/ | Sources |
+| --- | --- | --- | --- | --- |
+| F01.01 | Volume transactionnel élevé | (TR3) | 🟠 | \[D8.1\] §D8.1.2.2 : pagination par curseur dont le coût ne dépend pas de la taille de l'historique du client ; §D8.1.2.4 : réservation par lots de 500 avec `FOR UPDATE SKIP LOCKED`, plusieurs *workers* en parallèle sans blocage. |
+| F01.02 | Latence transactionnelle minimale | (TR3) | 🟢 | \[D8.1\] §D8.1.1 : une requête transactionnelle s'exprime en quelques lignes identifiées par une clé ou un index sélectif, avec une latence de l'ordre de la milliseconde ; chaque requête nomme l'accès qui la sert. |
+| F01.03 | Cohérence et intégrité transactionnelle (ACID) | D2 | 🟢 | \[D8.1\] §D8.1.2.3 : deux instructions dans une même transaction SQL, idempotence par `ON CONFLICT DO NOTHING`, appartenance du moyen de paiement, du produit et du plan vérifiée par les clés étrangères composites sans code applicatif. |
+| F01.05 | Transactions multi-documents | (BR1) | 🟢 | \[D8.1\] §D8.1.2.3 : la réservation de la clé d'idempotence et la création de la transaction portent sur deux tables dans une seule transaction SQL. |
+| F01.08 | Paiements, remboursements, rétro-facturations | D2 | 🟠 | \[D8.1\] §D8.1.2.1 à §D8.1.2.3 couvrent la lecture et l'enregistrement d'un paiement ; aucun exemple ne porte sur un remboursement ni sur une rétro-facturation. |
+| F01.09 | Gestion des abonnements | D2 | 🟢 | \[D8.1\] §D8.1.2.4 : abonnements arrivés à échéance, index partiel `ix_subscription_due` |
+| F05.07 | Indexation | D4 | 🟢 | \[D8.1\] : chaque requête nomme l'index qui la sert, et §D8.1.2.4 définit sur place l'index partiel `ix_subscription_due` |
+| F06.04 | Journalisation d'audit | D6 | 🟢 | \[D8.1\] §D8.1.2.6 : qui a consulté les données d'un client et quand |
+| F06.05 | Surveillance de l'utilisation des données | (C5) | 🟢 | \[D8.1\] §D8.1.2.6, avec `was_authorized` |
+| F07.01 | Conformité réglementaire du stockage et du traitement | D6 | 🟢 | \[D8.1\] §D8.1.2.5 (demandes non terminées à moins de cinq jours de l'échéance) |
+| F07.02 | RGPD | (TR5) | 🟢 | \[D8.1\] §D8.1.2.5 |
+| F07.06 | Contrôles de conformité automatisés | D6 | 🟢 | \[D8.1\] §D8.1.2.5 (détection des demandes de droit non clôturées) |
+| F09.06 | Jeu de requêtes SQL et NoSQL | **D8** | 🟢 | \[D8.1\] : six requêtes transactionnelles |
+
+> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D8/1 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
 
 ---
 

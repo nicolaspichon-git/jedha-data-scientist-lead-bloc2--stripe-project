@@ -18,7 +18,6 @@ tags:
 ## Annexes
 ### 3.A. NoSQL Storage Model Rationale
 
-
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / NoSQL Data System / Annexe A / v09 --- 2026/11/05.* 
 ---
 
