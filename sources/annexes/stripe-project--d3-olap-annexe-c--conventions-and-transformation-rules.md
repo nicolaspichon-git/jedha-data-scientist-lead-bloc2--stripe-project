@@ -194,14 +194,14 @@ Les points ci-dessous ne sont pas tranchés. Pour chacun de ces points, le table
 
 ### Références
 
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+
 #### Livrables
-- \[D3\] [OLAP System Schema Design](stripe-step-2--olap-design.pdf)
+- \[D3\] [OLAP System Schema Design](stripe-project--d3-olap-design.pdf)
 
 #### Annexes
-- \[D3-A\] [OLAP Kimball Analysis](stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
-- \[D3-B\] [OLAP Physical Data Model](stripe-step-2--olap-annexe-b--dbml.dbml)
-- \[D2-A\] [OLTP Conceptual Data Model](stripe-step-1--oltp-annexe-a--mcd.pdf)
-- \[D2-B\] [OLTP Physical Data Model](stripe-step-1--oltp-annexe-b--dbml.dbml)
-
-#### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D3-A\] [OLAP Kimball Analysis](stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
+- \[D3-B\] [OLAP Physical Data Model](stripe-project--d3-olap-annexe-b--dbml.dbml)
+- \[D2-A\] [OLTP Conceptual Data Model](stripe-project--d2-oltp-annexe-a--mcd.pdf)
+- \[D2-B\] [OLTP Physical Data Model](stripe-project--d2-oltp-annexe-b--dbml.dbml)

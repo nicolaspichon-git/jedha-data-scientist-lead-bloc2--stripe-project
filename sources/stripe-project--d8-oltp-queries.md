@@ -291,7 +291,7 @@ D'après \[D0, §0.2.8\].
 ### Références
 
 #### Spécifications
-- \[D0\] [Stripe Project : Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project : Introduction](stripe-project--d0-introduction.pdf)
 
 #### Annexes
-- \[D2-B\] [OLTP Physical Model](stripe-step-1--oltp-annexe-b--dbml.dbml)
+- \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.pdf)

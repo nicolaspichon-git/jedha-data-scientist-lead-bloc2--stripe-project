@@ -51,26 +51,27 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D0\] [*Stripe Project Introduction*](stripe-project--d0-introduction.pdf)
 
 #### Livrables
-- \[D1\] [*Comprehensive Data Architecture Diagram*](stripe-step-8--data-architecture.pdf)
+- \[D1\] [*Comprehensive Data Architecture Diagram*](stripe-project--d1-data-architecture.pdf)
 - \[D2\] [*OLTP Entity-Relation Diagrams*](stripe-project--d2-oltp-diagrams.pdf)
 - \[D3\] [*OLAP System Schema Design*](stripe-project--d3-olap-design.pdf)
 - \[D4\] [*NoSQL Data Model*](stripe-project--d4-nosql-data-model.pdf)
-- \[D5\] [*Data Pipeline Architecture*](stripe-step-4--data-pipeline-architecture.pdf)
-- \[D6\] [*Security and Compliance Plan*](stripe-step-5--security-and-compliance-plan.pdf)
-- \[D7\] [*Machine Learning Integration Strategy*](stripe-step-4--ml-integration-strategy.pdf)
+- \[D5\] [*Data Pipeline Architecture*](stripe-project--d5-data-pipeline-architecture.pdf)
+- \[D6\] [*Security and Compliance Plan*](stripe-project--d6-security-and-compliance-plan.pdf)
+- \[D7\] [*Machine Learning Integration Strategy*](stripe-project--d7-ml-integration-strategy.pdf)
 - \[D8-1\] [*SQL and NoSQL Queries : OLTP Queries*](stripe-project--d8-oltp-queries.pdf)
 - \[D8-2\] [*SQL and NoSQL Queries : OLAP Queries*](stripe-project--d8-olap-queries.pdf)
 - \[D8-3\] [*SQL and NoSQL Queries : NoSQL Queries*](stripe-project--d8-nosql-queries.pdf)
 
 #### Annexes
 - \[D2-A\] [*OLPT Conceptual Data Model*](annexes/stripe-project--d2-oltp-annexe-a--mcd.pdf)
-- \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-project--d2-oltp-annexe-b--dbml.dbml)
+- \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)
 - \[D2-C\] [*OLTP Design Notes*](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
 - \[D2-D\] [*OLTP Replication, Failover and Disaster Recovery Strategy*](annexes/stripe-project--d2-oltp-annexe-d--disaster-recovery-strategy.pdf)
 - \[D3-A\] [*OLAP Kimball Analysis*](annexes/stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
-- \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-project--d3-olap-annexe-b--dbml.dbml)
+- \[D3-B\] [*OLAP Physical Data Model*](annexes/stripe-project--d3-olap-annexe-b--dbml.pdf)
 - \[D3-C\] [*OLAP Conventions and Transformation Rules*](annexes/stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)
 - \[D4-A\] [*NoSQL Storage Model Rationale*](annexes/stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
-
+- \[D5-A\] [*Data Pipeline Tools Rationale*](annexes/stripe-project--d5-data-pipeline-annexe-a--tools-rationale.pdf)
+- \[D5-B\] [*Data Pipeline Feature Store Notes*](annexes/stripe-project--d5-data-pipeline-annexe-b--feature-store-notes.pdf)
 #### Ressources
 - \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)

@@ -79,7 +79,7 @@ Chaque étoile a son propre diagramme :
 
 #### D3.3.1. Revenus (P1/FactTransaction)
 
-![[stripe-step-2--olap-design--diagram-p1.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p1.svg]]
 
 Grain : `FactTransaction` (une transaction). 
 
@@ -93,7 +93,7 @@ Géographie : `geography_key` (non nulle) désigne le pays où la transaction a 
 
 #### D3.3.2. Fraudes (P2/FactFraudEvent)
 
-![[stripe-step-2--olap-design--diagram-p2.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p2.svg]]
 
 Grain : un événement d'évaluation du risque de fraude (fait transactionnel). `is_confirmed_fraud` est la seule colonne mise à jour après l'insertion, quand la décision de fraude est confirmée \[D3-A\] (2.A.3) et \[D3-C\] (ETL-02).
 
@@ -103,7 +103,7 @@ Grain : un événement d'évaluation du risque de fraude (fait transactionnel). 
 
 #### D3.3.3. Abonnements (P3/FactSubscriptionSnapshot)
 
-![[stripe-step-2--olap-design--diagram-p3.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p3.svg]]
 
 Grain : `FactSubscriptionSnapshot` (un instantané d'abonnement capturé périodiquement). 
 
@@ -113,7 +113,7 @@ Grain : `FactSubscriptionSnapshot` (un instantané d'abonnement capturé périod
 
 #### D3.3.4. Lectures et écritures (P4/FactAuditEvent)
 
-![[diagrams/stripe-step-2--olap-design--diagram-p4.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p4.svg]]
 
 Grain : un événement d'audit, accès (`DataAccessLog`) **ou** modification (`ChangeAuditLog`). 
 
@@ -123,7 +123,7 @@ Grain : un événement d'audit, accès (`DataAccessLog`) **ou** modification (`C
 
 #### D3.3.5. Demandes de droits (P5/FactDataSubjectRequest)
 
-![[diagrams/stripe-step-2--olap-design--diagram-p5.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p5.svg]]
 
 Grain : une demande de droit, mise à jour au fur et à mesure de son traitement. 
 
@@ -131,7 +131,7 @@ Grain : une demande de droit, mise à jour au fur et à mesure de son traitement
 
 #### D3.3.6. Incidents de sécurité (P6/FactSecurityIncident)
 
-![[diagrams/stripe-step-2--olap-design--diagram-p6.svg]]
+![[diagrams/stripe-project--d3-olap-design--diagram-p6.svg]]
 
 Grain : un incident de sécurité, mis à jour au fur et à mesure de son traitement. 
 
@@ -285,7 +285,7 @@ Les valeurs que l'OLTP ne fournit pas telles quelles (segment client, regroupeme
 
 #### Spécifications
 - \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
-- 
+
 #### Annexes
 - \[D3-A\] [OLAP Kimball Analysis](stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
 - \[D3-B\] [OLAP Physical Data Model](stripe-project--d3-olap-annexe-b--dbml.pdf)

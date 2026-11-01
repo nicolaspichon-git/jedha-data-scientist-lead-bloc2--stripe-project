@@ -167,8 +167,9 @@ Vue synthétique du partage des dimensions entre processus. Chaque case cochée 
 
 ### Références
 
-#### Annexes
-- \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
 
 #### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project Introduction](annexes/stripe-project--d0-introduction.pdf)
+
+#### Annexes
+- \[D3-C\] [OLAP Conventions and Transformation Rules](annexes/stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)

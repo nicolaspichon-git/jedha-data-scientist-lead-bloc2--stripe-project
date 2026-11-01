@@ -87,7 +87,7 @@ Les collections suivantes sont soumises à une validation *JSON Schema* minimale
 *Caractéristiques* : Volume très élevé, écriture massive, lecture ciblée par fenêtre temporelle. 
 Le sous-document `context` reste _libre_ (forme variable selon le service émetteur). 
 
-![[diagrams/stripe-step-3--nosql-data-model--diagram-1-1.svg|600]]
+![[stripe-project--d1-nosql-data-model--diagram-1-1.svg|600]]
 
 
 ```python
@@ -166,7 +166,7 @@ Purge automatique de l'entrée de journal 90 jours après sa création (principe
 *Caractéristiques* : une session d'utilisateur est un document. 
 Les événements sont _imbriqués_, car on ne consulte jamais un évènement de clic isolément.
 
-![[diagrams/stripe-step-3--nosql-data-model--diagram-1-2.svg|800]]
+![[stripe-project--d1-nosql-data-model--diagram-1-2.svg|800]]
 
 ```python
 from datetime import datetime
@@ -262,7 +262,7 @@ db.command("shardCollection", "stripe.user_sessions",
 
 **Point de conception** : un document continuellement actualisé par entité. C'est le bon grain pour un magasin de features servant l'inférence en temps réel : au moment où une nouvelle transaction arrive, il faut récupérer le profil _courant_ du client (pas l'historique des évaluations passées). Le magasin de features *NoSQL* est donc un cache d'état courant.
 
-![[diagrams/stripe-step-3--nosql-data-model--diagram-1-3.svg|800]]
+![[stripe-project--d1-nosql-data-model--diagram-1-3.svg|800]]
 
 ```python
 from datetime import datetime
@@ -334,7 +334,7 @@ db.command("shardCollection", "stripe.ml_features", key={"_id": "hashed"})
 
 *Caractéristiques* : volume modeste, structure hétérogène, recherche plein texte. 
 
-![[diagrams/stripe-step-3--nosql-data-model--diagram-1-4.svg]]
+![[stripe-project--d1-nosql-data-model--diagram-1-4.svg]]
 
 ```python
 from datetime import datetime
@@ -424,7 +424,7 @@ db.command("shardCollection", "stripe.customer_feedback", key={"merchant_id": 1}
 
 *Caractéristiques* : cache de référence pour éviter d'interroger les tables transactionnelles à chaque événement applicatif. Petite collection, très lue, quasiment jamais écrite. 
 
-![[diagrams/stripe-step-3--nosql-data-model--diagram-1-5.svg|600]]
+![[stripe-project--d1-nosql-data-model--diagram-1-5.svg|600]]
 
 ```python
 from datetime import datetime
@@ -640,12 +640,12 @@ D'après \[D0, §0.2.8\].
 - \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
 
 #### Livrables
-- \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture.pdf)
+- \[D1\] [Data Architecture Diagram](stripe-project--d1-data-architecture.pdf)
 
 #### Annexes
-- \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.pdf)
-- \[D2-C\] [OLTP Design Notes](stripe-project--d2-oltp-annexe-c--design-notes.pdf)
-- \[D4-A\] [NoSQL Storage Model Rationale](stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
+- \[D2-B\] [OLTP Physical Model](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)
+- \[D2-C\] [OLTP Design Notes](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
+- \[D4-A\] [NoSQL Storage Model Rationale](annexes/stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
 
 #### Documents Applicables
 - \[A1\] [MongoDB : Designing Your Schema](https://www.mongodb.com/docs/manual/data-modeling/schema-design-process/)

@@ -72,8 +72,9 @@ Pour répondre à l'exigence technique "_distributed databases and data sharding
 
 #### Références
 
-##### Livrables
-- \[D1\] [Data Architecture Diagram](stripe-step-8--data-architecture.pdf)
-- \[D4\] [NoSQL Data Model](stripe-project--d4-nosql-data-model.pdf)
 ##### Spécifications
 - \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+- 
+##### Livrables
+- \[D1\] [Data Architecture Diagram](stripe-projet--d1-data-architecture.pdf)
+- \[D4\] [NoSQL Data Model](stripe-project--d4-nosql-data-model.pdf)

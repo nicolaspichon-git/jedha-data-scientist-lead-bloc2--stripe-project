@@ -23,7 +23,7 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / OLTP Data System / Annexe A / v36 --- 2026/11/05.*   
 ---
 
-Ce document présente le modèle conceptuel du modèle de données transactionnelles *Stripe*. 
+Ce document présente le modèle conceptuel du modèle de données transactionnelles *Stripe* \[D0\]. 
 
 L'approche *Merise* permet de découvrir le système conceptuel entités-associations, de le formaliser et de le transformer en modèle logique. Cette approche s'attache d'abord à décrire le métier indépendamment de toute implémentation physique : dans le modèle conceptuel, on n'a pas de clé étrangère, de typage SQL, ou de table de jointure. Ces derniers éléments n'entrent en jeu qu'au moment de la transformation du modèle conceptuel en modèle *logique* (cf. §1.A.5). Le modèle logique est présenté *en creux* via l'identification des différences entre les deux modèles.
 
@@ -352,3 +352,7 @@ Les entités `ACCESS`, `CHANGE` et `SECURITY_INCIDENT` portent ce lien explicite
 
 ---
 
+### Références
+
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

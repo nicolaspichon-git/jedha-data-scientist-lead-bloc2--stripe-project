@@ -467,12 +467,12 @@ D'après \[D0, §0.2.8\].
 ### Références
 
 #### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
 
 #### Livrables
-- \[D3\] [OLAP System Schema Design](stripe-step-2--olap-design.pdf)
+- \[D3\] [OLAP System Schema Design](stripe-project--d3-olap-design.pdf)
 
 #### Annexes
-- \[D3-A\] [OLAP Kimball Analysis](stripe-step-2--olap-annexe-a--kimball-analysis.pdf)
-- \[D3-B\] [OLAP Physical Data Model](stripe-step-2--olap-annexe-b--dbml.dbml)
-- \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-step-2--olap-annexe-c--conventions-and-transformation-rules.pdf)
+- \[D3-A\] [OLAP Kimball Analysis](stripe-project--d3-olap-annexe-a--kimball-analysis.pdf)
+- \[D3-B\] [OLAP Physical Data Model](stripe-project--d3-olap-annexe-b--dbml.dbml)
+- \[D3-C\] [OLAP Conventions and Transformation Rules](stripe-project--d3-olap-annexe-c--conventions-and-transformation-rules.pdf)

@@ -246,14 +246,12 @@ D'après \[D0, §0.2.8\] (prend en compte les annexes A, B, C et D).
 
 ### Références
 
+#### Spécifications
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+#### Livrables
+- \[D1\] [Data Architecture](stripe-project--d1-data-architecture.pdf)
 #### Annexes
 - \[D2-A\] [OLTP Data Conceptual Model](annexes/stripe-project--d2-oltp-annexe-a--mcd.pdf)
 - \[D2-B\] [OLTP Data Physical Model](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)
 - \[D2-C\] [OLTP Design Notes](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
 - \[D2-D\] [OLTP Replication, Failover and Disaster Recovery Strategy](annexes/stripe-project--d2-oltp-annexe-d--disaster-recovery-strategy.pdf)
-
-#### Livrables
-- \[D1\] [Data Architecture](stripe-step-8--data-architecture.pdf)
-
-#### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)

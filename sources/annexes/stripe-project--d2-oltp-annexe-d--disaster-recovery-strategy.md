@@ -331,7 +331,8 @@ Le diagramme suivant récapitule l'architecture de la solution technique de rép
 
 #### Références
 
-##### Annexes
-- \[D2-B\] [OLTP Physical Model](stripe-step-1--oltp-annexe-b--dbml.dbml)
 ##### Spécifications
-- \[D0\] [Stripe Project Introduction](stripe-step-0--introduction.pdf)
+- \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
+- 
+##### Annexes
+- \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.pdf)
