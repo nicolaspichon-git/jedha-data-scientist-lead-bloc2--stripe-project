@@ -1,8 +1,7 @@
 > v10
 ```mermaid
 flowchart TB
-	SCORES_SOURCE["Scores Source<br/>(<code>fraud</code> streams)"]
-	LABELS_SOURCE["Ground-Truth Source<br/>(labelized trans.)"]
+	LABELS_SOURCE["Ground-Truth Source<br/>(labelized transactions)"]
 	FEATURES_SOURCE["Features Source<br/>(<code>cdc</code> streams)"]
 	
 	FEATURES_SCHEMA["Features Schema<br/>(unique feat. def.)<br/>(ex: <i>Feast Registry</i>)"]
@@ -13,9 +12,9 @@ flowchart TB
 	FEATURES_STORE["Offline Features Store<br/>(stack onlines)<br/>(retention pol.)<br/>(ex: <i>Snowflake</i>)"]
 
 	TRAINING_TEAM["Training Team"]
-
 	TRAINING_DATASETS_BUILDER["Training Datasets Builder<br/>(joins features+labels)"]
-	
+	TRAINING_PIPELINE["Training pipeline"]
+
 	DATASETS_REGISTRY["Datasets Registry<br/>(version+store)"]
 	MODELS_FACTORY["Models Factory"]
 
@@ -108,8 +107,9 @@ flowchart TB
     
     style TRAINING_DATASETS_BUILDER fill:#EBF5FB,stroke:#3498DB
 
-    style TRAINING_TEAM fill:#F4ECF7,stroke:#8E44AD
     style MODELS_FACTORY fill:#F4ECF7,stroke:#8E44AD
+    style TRAINING_TEAM fill:#F4ECF7,stroke:#8E44AD
+    style TRAINING_PIPELINE fill:#F4ECF7,stroke:#8E44AD
 
     style MODELS_REGISTRY fill:#D6DBDF,stroke:#2C3E50
     style CHALLENGING fill:#D6DBDF,stroke:#2C3E50
@@ -125,6 +125,7 @@ flowchart TB
     style MONITORING_DRIFT_HANDLER fill:#FDF2E3,stroke:#E67E22
     style MONITORING_CONSUMER fill:#FDF2E3,stroke:#E67E22
     
+    style RETRAINING_DATASETS_BUILDER fill:#FDF2E3,stroke:#E67E22
     style RETRAINING_DATASET fill:#FDF2E3,stroke:#E67E22
     style RETRAINING_PIPELINE fill:#FDF2E3,stroke:#E67E22
 ```
