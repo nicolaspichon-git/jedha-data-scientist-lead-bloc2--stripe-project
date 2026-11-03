@@ -21,6 +21,17 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / NoSQL Data System / Annexe A / v09 --- 2026/11/05.* 
 ---
 
+- [[#3.A.1. Pourquoi choisir une base orientée _document_?|3.A.1. Pourquoi choisir une base orientée _document_?]]
+- [[#3.A.2. Sources de données|3.A.2. Sources de données]]
+- [[#3.A.3. Discussion sur les autres familles de stockage|3.A.3. Discussion sur les autres familles de stockage]]
+- [[#3.A.4. Avantages spécifiques du stockage par documents|3.A.4. Avantages spécifiques du stockage par documents]]
+    - [[#3.A.4.1. Le format correspond déjà à la donnée source|3.A.4.1. Le format correspond déjà à la donnée source]]
+    - [[#3.A.4.2. Schéma flexible sans migration|3.A.4.2. Schéma flexible sans migration]]
+    - [[#3.A.4.3. Requêtage riche sur des champs imbriqués|3.A.4.3. Requêtage riche sur des champs imbriqués]]
+    - [[#3.A.4.4. Capture des changements par _Change Streams_|3.A.4.4. Capture des changements par _Change Streams_]]
+    - [[#3.A.4.5. _Sharding_ horizontal natif|3.A.4.5. _Sharding_ horizontal natif]]
+- [[#Références|Références]]
+
 #### 3.A.1. Pourquoi choisir une base orientée _document_?
 
 La première exigence technique du cahier des charges (TR1 dans \[D0\]) demande explicitement que le système soit capable de requêter efficacement des données non structurées imbriquées (_"efficient querying of nested and unstructured data"_). Cette exigence élimine, de fait, les trois autres familles de stockage *NoSQL* (cf. analyse ci-dessous).

@@ -22,6 +22,23 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D4 : NoSQL Data Model / v09 --- 2026/11/05.*   
 ---
 
+- [[#D4.1 Contexte|D4.1 Contexte]]
+- [[#D4.2. Méthode d'analyse|D4.2. Méthode d'analyse]]
+- [[#D4.3. Principes de conception|D4.3. Principes de conception]]
+- [[#D4.4. Analyse des motifs d'accès|D4.4. Analyse des motifs d'accès]]
+- [[#D4.5. Collections|D4.5. Collections]]
+    - [[#D4.5.1. Remarque sur la validation des schémas|D4.5.1. Remarque sur la validation des schémas]]
+    - [[#D4.5.2. `event_logs` : les journaux applicatifs|D4.5.2. `event_logs` : les journaux applicatifs]]
+    - [[#D4.5.3. `user_sessions` : clickstream et interactions|D4.5.3. `user_sessions` : clickstream et interactions]]
+    - [[#D4.5.4. `ml_features` : le magasin des features|D4.5.4. `ml_features` : le magasin des features]]
+    - [[#D4.5.5. `customer_feedback` : les réponses des avis et des enquêtes|D4.5.5. `customer_feedback` : les réponses des avis et des enquêtes]]
+    - [[#D4.5.6. `merchant_config` : configuration dénormalisée|D4.5.6. `merchant_config` : configuration dénormalisée]]
+- [[#D4.6. Stratégies de relations|D4.6. Stratégies de relations]]
+- [[#D4.7. Stratégie de _sharding_|D4.7. Stratégie de _sharding_]]
+- [[#D4.8. Intégration OLTP / OLAP|D4.8. Intégration OLTP / OLAP]]
+- [[#D4.9. Cohérence, sécurité et conformité|D4.9. Cohérence, sécurité et conformité]]
+- [[#Références|Références]]
+
 ### D4.1 Contexte
 
 Le cahier des charges \[D0\] demande que le système *NoSQL* couvre les données semi-structurées et non structurées issues des sources suivantes (cf. \[D0, §0.2.6/DS3\]) : 
@@ -62,8 +79,6 @@ sur les champs critiques pour éviter une dérive silencieuse.
 
 ###### 3. Imbriquer par défaut, référencer exceptionnellement
 Le levier de performance principal du modèle orienté *documents*, c'est d'éviter les jointures. Un document qui *embarque* (par opposition à "référencer") toutes les données que l'on attend d'une lecture typique permet de récupérer l'ensemble de ces données en un seul accès disque. L'imbrication est donc le choix de relation par défaut. Une entité interne d'un document n'est référencée que dans certains cas particuliers : entité partagée entre plusieurs documents, entité de taille non bornée, entité dont le cycle de vie est indépendant du document qui la mentionne. 
-
-<div style="page-break-after: always;"></div>
 
 ### D4.4. Analyse des motifs d'accès
 
@@ -160,6 +175,8 @@ db.command("shardCollection", "stripe.event_logs",
 
 ###### Durée de vie
 Purge automatique de l'entrée de journal 90 jours après sa création (principe de minimisation des données RGPD).
+
+<div style="page-break-after: always;"></div>
 
 #### D4.5.3. `user_sessions` : clickstream et interactions
 
@@ -330,6 +347,8 @@ db.command("shardCollection", "stripe.ml_features", key={"_id": "hashed"})
 - Références : `entity_id`, `merchant_id`.
 - Embarqués : `features` + `model_scores` (toujours lus ensemble).
 
+<div style="page-break-after: always;"></div>
+
 #### D4.5.5. `customer_feedback` : les réponses des avis et des enquêtes
 
 *Caractéristiques* : volume modeste, structure hétérogène, recherche plein texte. 
@@ -418,8 +437,6 @@ db.command("shardCollection", "stripe.customer_feedback", key={"merchant_id": 1}
 ###### Stratégie de sharding
 - Clé de *sharding* :`merchant_id` car lecture dominante du document par marchand.
 
-<div style="page-break-after: always;"></div>
-
 #### D4.5.6. `merchant_config` : configuration dénormalisée
 
 *Caractéristiques* : cache de référence pour éviter d'interroger les tables transactionnelles à chaque événement applicatif. Petite collection, très lue, quasiment jamais écrite. 
@@ -474,8 +491,6 @@ db.create_collection("merchant_config", validator=merchant_config_validator)
 
 ###### Patterns *MongoDB*
 - *Extended Reference Pattern* : `_id` est la clé de métier transactionnelle (`merchant_id`), mais le document duplique quelques attributs fréquemment lus (`legal_name`, `status`) pour éviter une lecture croisée vers les tables transactionnelles à chaque événement. La redondance est acceptable ici précisément parce que ces attributs changent rarement et que `synced_at` documente leur actualité.
-
-<div style="page-break-after: always;"></div>
 
 ###### Référencés vs. Embarqués
 - Référence : `country_code`. 
@@ -559,9 +574,9 @@ Dans le système *NoSQL*, on peut rapprocher une même personne physique agissan
 ###### Modèle de cohérence
 La vérification de cohérence à terme (*eventual consistency*) est acceptable pour les journaux et les sessions (un délai de quelques secondes sera sans conséquence). Inversement, dans le processus de décision de fraude, la contrainte de cohérence est très forte sur les données d'entrainement. Le système impose donc la garantie de cohérence maximale (_`readConcern: "majority"`_) aux opérations de lecture des données `ml_features`.
 
-> Remarque : `readConcern` est un réglage *MongoDB* qui définit la garantie de cohérence des données lues.  `"majority"` est le niveau le plus strict : il garantit que la donnée lue a été confirmée par la majorité des membres du *replica set* (l'ensemble des répliques d'un même jeu de données), et qu'elle ne sera donc pas annulée par un rollback ultérieur.
-
-> Cette garantie a un coût : la lecture est plus lente qu'une lecture sur un seul nœud, puisqu'il faut attendre la confirmation de plusieurs répliques plutôt que d'en interroger une seule immédiatement disponible.
+> **Remarque.** `readConcern` est un réglage *MongoDB* qui définit la garantie de cohérence des données lues.  `"majority"` est le niveau le plus strict : il garantit que la donnée lue a été confirmée par la majorité des membres du *replica set* (l'ensemble des répliques d'un même jeu de données), et qu'elle ne sera donc pas annulée par un rollback ultérieur.
+>
+> > Cette garantie a un coût : la lecture est plus lente qu'une lecture sur un seul nœud, puisqu'il faut attendre la confirmation de plusieurs répliques plutôt que d'en interroger une seule immédiatement disponible.
 
 ###### Chiffrement
 Chiffrement au repos (au niveau du stockage) et en transit (*TLS*). Les champs sensibles (`text` des retours clients, données d'identification) relèvent du chiffrement au niveau du champ (*Client-Side Field Level Encryption*).
@@ -574,63 +589,6 @@ Aucune donnée de carte bancaire complète n'est stockée dans le système *NoSQ
 
 ###### Contrôle d'accès
 Rôles définis par collection (lecture seule sur `event_logs` pour les analystes, écriture réservée aux services), et journalisation des accès.
-
-<div style="page-break-after: always;"></div>
-
-### Couverture des exigences
-
-D'après \[D0, §0.2.8\].
-
-| # | Fonctionnalité | A/ | C/ | Sources |
-| --- | --- | --- | --- | --- |
-| F02.11 | Analytique quasi temps réel | (BR2) | 🟠 | §D4.8 : transport continu par *Change Streams*, mais transformation à échéance planifiée et chargement par lots nocturnes. |
-| F03.01 | Stockage et traitement de données non structurées et semi-structurées | **D4** | 🟢 | §D4.1, §D4.5 (cinq collections) ; \[D4-A\] §3.A.2. |
-| F03.02 | Conception de schéma flexible | **D4** | 🟢 | §D4.3/2, §D4.5.1 (validation d'enveloppe), `schema_version` ; \[D4-A\] §3.A.4.2. |
-| F03.03 | Type de données JSON | **D4** | 🟢 | §D4.5 (documents) ; \[D4-A\] §3.A.4.1 : le format correspond déjà à la donnée source. |
-| F03.06 | Requêtage flexible des données imbriquées | **D4**, D8 | 🟢 | §D4.6/4 (composé, multikey, texte, TTL, sparse) ; \[D4-A\] §3.A.4.3. |
-| F03.07 | Récupération efficace des données | TR1/NoSQL | 🟢 | §D4.2 (motifs d'accès d'abord), §D4.3/1 et /3, §D4.4. |
-| F03.08 | Gestion des relations dans le NoSQL | **D4** | 🟢 | §D4.6/1 à /3 : imbrication, référencement, *extended reference*. |
-| F03.09 | Journaux, retours clients, données d'interaction | **D4** | 🟢 | §D4.5.2 `event_logs`, §D4.5.3 `user_sessions`, §D4.5.5 `customer_feedback` ; \[D4-A\] §3.A.2. |
-| F03.10 | Collecte depuis le site web et les applications mobiles | (C3) | 🟠 | \[D4-A\] §3.A.4.1 nomme la source (app web/mobile) ; aucun mécanisme d'ingestion n'est décrit. |
-| F04.01 | Intégration entre OLTP, OLAP et NoSQL | D1, D5 | 🟢 | §D4.8 : *OLTP* → *NoSQL* et *NoSQL* → *OLAP*. |
-| F04.03 | Circulation cohérente des données | D5 | 🟠 | §D4.8 ; les références sont logiques et sans intégrité garantie (§D4.6/2). |
-| F04.04 | Traitement par lots | D5 | 🟢 | §D4.8 : agrégation et chargement par lots nocturnes. |
-| F04.05 | Flux de données en continu | D5 | 🟢 | §D4.8 : *Kafka* en entrée, *Change Streams* en sortie ; \[D4-A\] §3.A.4.4. |
-| F04.06 | Synchronisation en temps réel | D5 | 🟠 | §D4.8 : *CDC* actualise `merchant_config` et déclenche le recalcul des `ml_features` ; `synced_at` date la copie. |
-| F04.07 | Processus ETL/ELT | D5 | 🟠 | §D4.8 : le consommateur *Airflow* accumule puis transforme ; le pipeline lui-même relève de \[D5\]. |
-| F04.08 | Transformation et enrichissement des données | D5 | 🟠 | §D4.8 (agrégation avant chargement) ; §D4.5.5 (`nlp` : sentiment, topics). |
-| F04.09 | Cohérence des données entre systèmes | D5 | 🟢 | §D4.9 : cohérence à terme pour les journaux et les sessions, `readConcern: "majority"` sur `ml_features`. |
-| F04.10 | Fraîcheur des données | D5 | 🟠 | `computed_at`, `synced_at`, recalcul déclenché par *CDC* (§D4.8) ; aucune cible de fraîcheur. |
-| F04.11 | Cohérence à terme (*eventual consistency*) | (TR4) | 🟢 | §D4.9 : admise pour les journaux et les sessions, écartée pour la décision de fraude. |
-| F04.13 | *Change Data Capture* | D5 | 🟢 | §D4.8 ; \[D4-A\] §3.A.4.4 (*Change Streams*). |
-| F04.14 | Outils de streaming et d'orchestration (*Kafka*, *Airflow*) | D5 | 🟢 | §D4.8 ; \[D4-A\] §3.A.4.4. |
-| F04.15 | Vue globale et cohérente des données | (BR3) | 🟠 | §D4.8 : le *NoSQL* comme couche de rapprochement transverse ; le rapprochement n'est pas modélisé. |
-| F04.16 | Accessibilité pour les différents cas d'usage | (C4) | 🟠 | §D4.4 : motifs d'accès par collection ; aucune couche d'exposition. |
-| F05.01 | Montée en charge horizontale | (TR3) | 🟢 | §D4.7 ; \[D4-A\] §3.A.4.5 : *sharding* horizontal natif sans revoir le modèle. |
-| F05.02 | Haute disponibilité | (TR3) | 🟠 | §D4.9 : le *replica set* n'est cité qu'à propos de `readConcern` ; ni facteur de réplication ni reprise. |
-| F05.03 | Bases de données distribuées | (TR3) | 🟠 | §D4.7 (cluster shardé), §D4.9 (*replica set*) ; aucune topologie. |
-| F05.04 | Sharding | (TR3) | 🟢 | §D4.7 : clé justifiée par collection ; \[D4-A\] §3.A.4.5. |
-| F05.05 | Partitionnement | (TR3) | 🟠 | §D4.7 : le *sharding* tient lieu de partitionnement ; les collections *time series* ne sont pas envisagées. |
-| F05.06 | Mise en cache | (TR3) | 🟠 | §D4.5.6 `merchant_config` (cache de référence), §D4.5.4 `ml_features` (cache d'état courant) ; pas de cache applicatif. |
-| F05.07 | Indexation | **D4** | 🟢 | §D4.5 (par collection), §D4.6/4 (typologie et arbitrage lecture/écriture). |
-| F06.01 | Chiffrement des données | D6 | 🟢 | §D4.9 : au repos, en transit, et par champ (*CSFLE*). |
-| F06.02 | Distinction du repos et du transit | (C5) | 🟢 | §D4.9 : chiffrement au repos au niveau du stockage, *TLS* en transit. |
-| F06.03 | Contrôles d'accès (RBAC) | D6 | 🟢 | §D4.9 : rôles définis par collection. |
-| F06.04 | Journalisation d'audit | D6 | 🟠 | §D4.9 : « journalisation des accès », sans modèle ni rétention ; `event_logs` est un journal applicatif. |
-| F06.05 | Surveillance de l'utilisation des données | (C5) | 🟠 | §D4.9 : journalisation des accès seule. |
-| F07.01 | Conformité réglementaire du stockage et du traitement | D6 | 🟢 | §D4.9 : RGPD et PCI-DSS. |
-| F07.02 | RGPD | (TR5) | 🟢 | §D4.9 : droit à l'effacement via les index `customer_id`, minimisation par *TTL* (§D4.5.2, §D4.5.3). |
-| F07.03 | PCI-DSS | (TR5) | 🟢 | §D4.9 : aucune donnée de carte complète. |
-| F07.06 | Contrôles de conformité automatisés | D6 | 🟠 | Index *TTL* : la rétention est appliquée par le moteur (§D4.5.2, §D4.5.3). |
-| F08.01 | Modèles de détection de fraude en temps réel | **D4**, D7, D8 | 🟢 | §D4.5.4 `ml_features` (lecture par clé, latence critique), `model_scores.fraud_v3`, §D4.9. |
-| F08.03 | Analyse prédictive | (C3) | 🟠 | `model_scores.churn_v1` (§D4.5.4) est le seul score non frauduleux ; aucun traitement associé. |
-| F08.04 | Intégration des modèles au sein du NoSQL | **D4**, D7 | 🟢 | §D4.5.4 : magasin de features et scores dans la base. |
-| F08.05 | Extraction de caractéristiques | D7 | 🟢 | §D4.5.4 : *Computed Pattern*, `features` pré-calculées par un job périodique. |
-| F08.07 | Suivi de la performance des modèles et mise à jour | D7 | 🟠 | §D4.5.4 : *Schema Versioning Pattern* absorbe l'itération de modèle ; ni suivi ni déploiement. |
-| F09.01 | Conception des modèles de données par système | D1, D2, D3, **D4** | 🟢 | §D4.2 à §D4.7 pour le système *NoSQL* ; \[D4-A\] §3.A.1 et §3.A.3 justifient la famille de stockage. |
-| F09.05 | Stratégie d'intégration du machine learning | D7 | 🟠 | §D4.5.4 et §D4.8 ; le déploiement et le suivi relèvent de \[D7\], sans renvoi explicite. |
-
-> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D4 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
 
 ---
 
