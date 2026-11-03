@@ -28,6 +28,28 @@ tags:
 
 ---
 
+- [[#1.D.1. Contexte|1.D.1. Contexte]]
+- [[#1.D.2. Réplication|1.D.2. Réplication]]
+    - [[#1.D.2.1. Principes|1.D.2.1. Principes]]
+    - [[#1.D.2.2. Réplication physique en streaming|1.D.2.2. Réplication physique en streaming]]
+- [[#1.D.3. Bascule (failover)|1.D.3. Bascule (failover)]]
+    - [[#1.D.3.1. Principes|1.D.3.1. Principes]]
+    - [[#1.D.3.2. Fonctions _PostgreSQL_|1.D.3.2. Fonctions _PostgreSQL_]]
+    - [[#1.D.3.3. Architecture retenue|1.D.3.3. Architecture retenue]]
+    - [[#1.D.3.4. Détection, élection et promotion : _Patroni_ + _etcd_|1.D.3.4. Détection, élection et promotion : _Patroni_ + _etcd_]]
+    - [[#1.D.3.5. Redirection des applications : proxy de connexion|1.D.3.5. Redirection des applications : proxy de connexion]]
+    - [[#1.D.3.6. Pooling de connexions|1.D.3.6. Pooling de connexions]]
+    - [[#1.D.3.7. Fenêtre de bascule|1.D.3.7. Fenêtre de bascule]]
+    - [[#1.D.3.8. Supervision et alertes|1.D.3.8. Supervision et alertes]]
+    - [[#1.D.3.9. Répliques asynchrones inter-régions|1.D.3.9. Répliques asynchrones inter-régions]]
+- [[#1.D.4. Reprise après sinistre (_disaster recovery_)|1.D.4. Reprise après sinistre (_disaster recovery_)]]
+    - [[#1.D.4.1. Failover (A) vs Disaster Recovery (B)|1.D.4.1. Failover (A) vs Disaster Recovery (B)]]
+    - [[#1.D.4.2. Bascule inter-région|1.D.4.2. Bascule inter-région]]
+    - [[#1.D.4.3. Signalisation de la perte des tables des journaux après bascule|1.D.4.3. Signalisation de la perte des tables des journaux après bascule]]
+- [[#1.D.5. Sauvegarde vs. Réplication|1.D.5. Sauvegarde vs. Réplication]]
+- [[#1.D.6. Architecture du système de réplication|1.D.6. Architecture du système de réplication]]
+- [[#Références|Références]]
+
 #### 1.D.1. Contexte
 
 Ce document annexe présente les stratégies de réplication, de basculement (*failover*) et de reprise après sinistre (*disaster recovery*) du système *OLTP*. Bien que ces fonctions ne soient pas exigées dans les livrables du projet \[D0\], elles sont mentionnés plus ou moins explicitement dans les exigences :
@@ -62,7 +84,7 @@ Le système *OLTP* supporte l'écriture de données de criticité différentes :
 - Les liste de références :
 	- `Country`, `Currency, statuts, etc.
 
-<div style="page-break-after: always;"></div>
+
 
 Chacune de ces familles des données a des exigences de continuité propres :
 
@@ -100,7 +122,7 @@ Le *failover* est un processus en quatre étapes :
 3. *Promotion* : transformer techniquement cette réplique en primaire ;
 4. *Redirection* : faire en sorte que (1) les applications se connectent au nouveau primaire, (2) les anciennes répliques suivent le nouveau.
 
-<div style="page-break-after: always;"></div>
+
 
 ###### Limites
 *Monitoring*. La proposition courante n'intègre pas la supervision des pannes ni des états du processus de *failover*.
@@ -244,7 +266,7 @@ Une bascule peut avoir lieu sans que personne ne le sache. Ce document ne spéci
 ##### 1.D.3.9. Répliques asynchrones inter-régions
 Les répliques _asynchrones_ inter-régions ne participent pas à l'élection automatique (car la latence de réseau inter-régions est trop variable pour fiabiliser un quorum) : elles portent les _tags_ `nofailover` et `nosync`, et le cluster _etcd_ n'est pas étendu à leur région. Elles servent au recouvrement après sinistre (§1.D.4). 
 
-<div style="page-break-after: always;"></div>
+
 
 #### 1.D.4. Reprise après sinistre (*disaster recovery*)
 
@@ -317,7 +339,7 @@ Snapshots complets hebdomadaires + 35 j -> 5 à 6 sauvegardes simultanées
 
 Le diagramme suivant récapitule l'architecture de la solution technique de réplication, bascule et recouvrement présentée en §1.D.2, §1.D.3 et §1.D.4.
 
-![[diagrams/stripe-step-1--oltp-annexe-d--failover--diagram-1.svg|800]]
+![[diagrams/stripe-step-1--oltp-annexe-d--failover--diagram-1.svg]]
 
 > _Légende_ : 
 > - 🔘 : _les applications et le plan de contrôle (Patroni, etcd)_

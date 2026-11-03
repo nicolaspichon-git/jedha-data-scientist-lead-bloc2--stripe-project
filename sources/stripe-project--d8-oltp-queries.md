@@ -22,6 +22,16 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D8.1 : OLTP Queries / v36 --- 2026/11/05.*   
 ---
 
+- [[#D8.1.1. Contexte|D8.1.1. Contexte]]
+- [[#D8.1.2. Requêtes transactionnelles|D8.1.2. Requêtes transactionnelles]]
+    - [[#D8.1.2.1. Lire une transaction|D8.1.2.1. Lire une transaction]]
+    - [[#D8.1.2.2. Dernières transactions d'un client|D8.1.2.2. Dernières transactions d'un client]]
+    - [[#D8.1.2.3. Enregistrer un paiement (idempotent)|D8.1.2.3. Enregistrer un paiement (idempotent)]]
+    - [[#D8.1.2.4. Abonnements à prélever|D8.1.2.4. Abonnements à prélever]]
+    - [[#D8.1.2.5. Demandes d'exercice de droits proches de l'échéance|D8.1.2.5. Demandes d'exercice de droits proches de l'échéance]]
+    - [[#D8.1.2.6. Historique des accès aux données d'un client|D8.1.2.6. Historique des accès aux données d'un client]]
+- [[#Références|Références]]
+
 ### D8.1.1. Contexte
 Ce document propose quelques exemples de requête SQL sur le modèle transactionnel. Ces requêtes illustrent le chemin de paiement et le domaine d'exploitation courante. Elles s'appuient exclusivement sur les index du modèle physique - conçus spécifiquement pour le domaine transactionnel.
 
@@ -66,8 +76,6 @@ WHERE t.transaction_id = :transaction_id ;
 ```
 
 \> *Commentaire* : Accès par la seule clé primaire `transaction_id` (pas de partitionnement).
-
-<div style="page-break-after: always;"></div>
 
 \> *Exemple de sortie* :
 
@@ -118,8 +126,6 @@ ON CONFLICT (merchant_id, idempotency_key) DO NOTHING
 RETURNING transaction_id;
 ```
 
-<div style="page-break-after: always;"></div>
-
 ```sql
 -- 2. Créer la transaction. 
 ---- Si aucune ligne n'est insérée, cela signifie qu'il manque un plan tarifaire 
@@ -164,8 +170,6 @@ WHERE c.customer_id = :customer_id;
 | `:created_at`        | `now()` au moment de l’exécution |
 | `:actor_id`          | api-key-42 |
 | `:actor_type_code`   | merchant_api |
-
-<div style="page-break-after: always;"></div>
 
 - Résultats :
 
@@ -230,8 +234,6 @@ WHERE NOT rs.is_terminal AND r.due_at < now() + INTERVAL '5 days'
 ORDER BY r.due_at;
 ```
 
-<div style="page-break-after: always;"></div>
-
 \> *Exemple de sortie* :
 
 | request_id | merchant_id | request_type | status_code | due_at | time_left |
@@ -259,32 +261,6 @@ ORDER BY l.occurred_at DESC;
 | 2026-10-23 09:41:04\[...\] | analyst-nora | user | update | Customer | true |
 | 2026-10-11 11:37:14\[...\] | svc-billing | system | read | PaymentMethod | true |
 | 2026-09-23 10:43:21\[...\] | intern-07 | user | export | Customer | false |
-
----
-
-<div style="page-break-after: always;"></div>
-
-### Couverture des exigences
-
-D'après \[D0, §0.2.8\].
-
-| # | Fonctionnalité | A/ | C/ | Sources |
-| --- | --- | --- | --- | --- |
-| F01.01 | Volume transactionnel élevé | (TR3) | 🟠 | \[D8.1\] §D8.1.2.2 : pagination par curseur dont le coût ne dépend pas de la taille de l'historique du client ; §D8.1.2.4 : réservation par lots de 500 avec `FOR UPDATE SKIP LOCKED`, plusieurs *workers* en parallèle sans blocage. |
-| F01.02 | Latence transactionnelle minimale | (TR3) | 🟢 | \[D8.1\] §D8.1.1 : une requête transactionnelle s'exprime en quelques lignes identifiées par une clé ou un index sélectif, avec une latence de l'ordre de la milliseconde ; chaque requête nomme l'accès qui la sert. |
-| F01.03 | Cohérence et intégrité transactionnelle (ACID) | D2 | 🟢 | \[D8.1\] §D8.1.2.3 : deux instructions dans une même transaction SQL, idempotence par `ON CONFLICT DO NOTHING`, appartenance du moyen de paiement, du produit et du plan vérifiée par les clés étrangères composites sans code applicatif. |
-| F01.05 | Transactions multi-documents | (BR1) | 🟢 | \[D8.1\] §D8.1.2.3 : la réservation de la clé d'idempotence et la création de la transaction portent sur deux tables dans une seule transaction SQL. |
-| F01.08 | Paiements, remboursements, rétro-facturations | D2 | 🟠 | \[D8.1\] §D8.1.2.1 à §D8.1.2.3 couvrent la lecture et l'enregistrement d'un paiement ; aucun exemple ne porte sur un remboursement ni sur une rétro-facturation. |
-| F01.09 | Gestion des abonnements | D2 | 🟢 | \[D8.1\] §D8.1.2.4 : abonnements arrivés à échéance, index partiel `ix_subscription_due` |
-| F05.07 | Indexation | D4 | 🟢 | \[D8.1\] : chaque requête nomme l'index qui la sert, et §D8.1.2.4 définit sur place l'index partiel `ix_subscription_due` |
-| F06.04 | Journalisation d'audit | D6 | 🟢 | \[D8.1\] §D8.1.2.6 : qui a consulté les données d'un client et quand |
-| F06.05 | Surveillance de l'utilisation des données | (C5) | 🟢 | \[D8.1\] §D8.1.2.6, avec `was_authorized` |
-| F07.01 | Conformité réglementaire du stockage et du traitement | D6 | 🟢 | \[D8.1\] §D8.1.2.5 (demandes non terminées à moins de cinq jours de l'échéance) |
-| F07.02 | RGPD | (TR5) | 🟢 | \[D8.1\] §D8.1.2.5 |
-| F07.06 | Contrôles de conformité automatisés | D6 | 🟢 | \[D8.1\] §D8.1.2.5 (détection des demandes de droit non clôturées) |
-| F09.06 | Jeu de requêtes SQL et NoSQL | **D8** | 🟢 | \[D8.1\] : six requêtes transactionnelles |
-
-> _Légende : « A/ » : les livrables qui couvrent la fonctionnalité dans D0, ou, à défaut, l'exigence technique, l'exigence d'affaire ou l'enjeu source ; « C/ » :  niveau de couverture par D8/1 ; 🟢 : fonctionnalité traitée ; 🟠 : fonctionnalité traitée partiellement (réserve est indiquée dans la colonne Sources)._
 
 ---
 

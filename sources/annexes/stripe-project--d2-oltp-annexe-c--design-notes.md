@@ -26,6 +26,21 @@ tags:
 
 ---
 
+- [[#1.C.1. Principes de conception|1.C.1. Principes de conception]]
+    - [[#1.C.1.1. Fils conducteurs|1.C.1.1. Fils conducteurs]]
+    - [[#1.C.1.2. Principes structurants|1.C.1.2. Principes structurants]]
+    - [[#1.C.1.3. Découplage autour de la transaction|1.C.1.3. Découplage autour de la transaction]]
+    - [[#1.C.1.4. Cloisonnement Merchant / Customer|1.C.1.4. Cloisonnement Merchant / Customer]]
+    - [[#1.C.1.5. Gestion des énumérés|1.C.1.5. Gestion des énumérés]]
+    - [[#1.C.1.6. Abonnements et Produits|1.C.1.6. Abonnements et Produits]]
+    - [[#1.C.1.7. Sécurité et conformité|1.C.1.7. Sécurité et conformité]]
+    - [[#1.C.1.8. Gestion des moyens de paiement : jeton et empreinte|1.C.1.8. Gestion des moyens de paiement : jeton et empreinte]]
+    - [[#1.C.1.9. Garantie de l'idempotence d'une transaction|1.C.1.9. Garantie de l'idempotence d'une transaction]]
+- [[#1.C.2. Justification du modèle de tarification|1.C.2. Justification du modèle de tarification]]
+- [[#1.C.3. Justification du modèle de sécurité et conformité|1.C.3. Justification du modèle de sécurité et conformité]]
+- [[#1.C.4. Passage à l'échelle : indexation, partitionnement, sharding|1.C.4. Passage à l'échelle : indexation, partitionnement, sharding]]
+- [[#Références|Références]]
+
 #### 1.C.1. Principes de conception
 ##### 1.C.1.1. Fils conducteurs
 
@@ -116,8 +131,6 @@ chaque type a un traitement métier différent, mais cette différence vit dans 
 et `.incident_type` (unauthorized_access | data_breach | anomalous_activity | failed_auth_burst) :
 passage en référence plausible (escalade automatique, notification différenciée) mais non spécifié dans le cahier des charges. 
 
-<div style="page-break-after: always;"></div>
-
 ##### 1.C.1.6. Abonnements et Produits
 ###### Modélisation de l'abonnement comme entité
 `Subscription` porte un cycle de vie propre  (actif, en pause, en impayé (`past_due`, avec relance
@@ -166,8 +179,6 @@ Un rapport de conformité doit prouver le respect des délais légaux et pas seu
 ##### 1.C.1.8. Gestion des moyens de paiement : jeton et empreinte
 
 Cette section expose les éléments justificatifs de l'introduction des informations "*jeton de paiement*" (`token_reference`) et "*empreinte de carte*" (`fingeprint`) dans la table `PaymentMethod`.
-
-<div style="page-break-after: always;"></div>
 
 ###### Origine du besoin
 On attend de la table `PaymentMethod` qu'elle conserve au moins les informations qui doivent être affichées ou vérifiées sans risque : type, marque, quatre derniers chiffres (`card_last4`) et date d'expiration. Cette exigence permet de respecter l'interdiction d'afficher le PAN en clair (PCI-DSS, cf. §1.C.3) mais n'est pas suffisant pour satisfaire les besoins suivants :
@@ -284,8 +295,6 @@ Pour une transaction donnée :
 
 ---
 
-<div style="page-break-after: always;"></div>
-
 #### 1.C.3. Justification du modèle de sécurité et conformité
 
 ###### Origine du besoin
@@ -358,7 +367,7 @@ Elles ne relèvent pas du schéma de données (cf. \[D0\] §0.4.3).
 
 #### Spécifications
 - \[D0\] [Stripe Project Introduction](stripe-project--d0-introduction.pdf)
-- 
+
 #### Annexes
 - \[D2-B\] [OLTP Physical Model](stripe-project--d2-oltp-annexe-b--dbml.dbml)
 

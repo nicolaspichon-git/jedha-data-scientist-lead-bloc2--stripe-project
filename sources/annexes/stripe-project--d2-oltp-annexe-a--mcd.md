@@ -23,6 +23,25 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / OLTP Data System / Annexe A / v36 --- 2026/11/05.*   
 ---
 
+- [[#1.A.1. Diagrammes|1.A.1. Diagrammes]]
+    - [[#1.A.1.1. Vues du coeur de métier (transactions hors scoring)|1.A.1.1. Vues du coeur de métier (transactions hors scoring)]]
+    - [[#1.A.1.2. Vue du scoring de fraude|1.A.1.2. Vue du scoring de fraude]]
+    - [[#1.A.1.3. Vue de sécurité & de conformité|1.A.1.3. Vue de sécurité & de conformité]]
+- [[#1.A.2. Dictionnaire des entités|1.A.2. Dictionnaire des entités]]
+- [[#1.A.3. Dictionnaire des associations|1.A.3. Dictionnaire des associations]]
+- [[#1.A.4. Règles de gestion|1.A.4. Règles de gestion]]
+- [[#1.A.5. Règles de passage au modèle logique|1.A.5. Règles de passage au modèle logique]]
+- [[#1.A.6. Différences entre les modèles conceptuel et logique|1.A.6. Différences entre les modèles conceptuel et logique]]
+    - [[#1.A.6.1. La notion d'abonnement est une entité logique mais pas conceptuelle|1.A.6.1. La notion d'abonnement est une entité logique mais pas conceptuelle]]
+    - [[#1.A.6.2. Clés étrangères|1.A.6.2. Clés étrangères]]
+    - [[#1.A.6.3. Table d'énumérés|1.A.6.3. Table d'énumérés]]
+    - [[#1.A.6.4. Cardinalité et optionnalité|1.A.6.4. Cardinalité et optionnalité]]
+    - [[#1.A.6.5. Le modèle conceptuel de transaction ignore la notion de commission|1.A.6.5. Le modèle conceptuel de transaction ignore la notion de commission]]
+    - [[#1.A.6.6. Modélisation de la commission _Stripe_|1.A.6.6. Modélisation de la commission _Stripe_]]
+    - [[#1.A.6.7. Scoring de fraude : trois entités pour trois réalités métier|1.A.6.7. Scoring de fraude : trois entités pour trois réalités métier]]
+    - [[#1.A.6.8. Sécurité et conformité|1.A.6.8. Sécurité et conformité]]
+- [[#Références|Références]]
+
 Ce document présente le modèle conceptuel du modèle de données transactionnelles *Stripe* \[D0\]. 
 
 L'approche *Merise* permet de découvrir le système conceptuel entités-associations, de le formaliser et de le transformer en modèle logique. Cette approche s'attache d'abord à décrire le métier indépendamment de toute implémentation physique : dans le modèle conceptuel, on n'a pas de clé étrangère, de typage SQL, ou de table de jointure. Ces derniers éléments n'entrent en jeu qu'au moment de la transformation du modèle conceptuel en modèle *logique* (cf. §1.A.5). Le modèle logique est présenté *en creux* via l'identification des différences entre les deux modèles.
@@ -31,30 +50,22 @@ L'approche *Merise* permet de découvrir le système conceptuel entités-associa
 
 Le modèle conceptuel est schématisé par les diagrammes suivants : vue du coeur de métier, vue du scoring de fraude, vue de sécurité et de conformité. Les rectangles représentent des *entités* et les losanges des *associations*. Les cardinalités sont inscrites sur les liens au format `(min, max)`.
 
-<div style="page-break-after: always;"></div>
-
 ##### 1.A.1.1. Vues du coeur de métier (transactions hors scoring)
 ###### 1.A.1.1.1. Transactions standards (hors abonnements)
 ![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-1-1.svg|700]]
 
-<div style="page-break-after: always;"></div>
-
 ###### 1.A.1.1.2. Transactions automatiques (via abonnements)
 ![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-1-2.svg|400]]
-
-<div style="page-break-after: always;"></div>
 
 ##### 1.A.1.2. Vue du scoring de fraude
 
 ![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-2.svg|400]]
 
-<div style="page-break-after: always;"></div>
 
 ##### 1.A.1.3. Vue de sécurité & de conformité
 
 ![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-3.svg]]
 
-<div style="page-break-after: always;"></div>
 
 #### 1.A.2. Dictionnaire des entités
 
@@ -82,7 +93,6 @@ Le symbole `#` marque l'identifiant.
 | `DATA_SUBJECT_REQUEST` | `#request_id`, `request_type`, `regulation`, `status`, `received_at`, `due_at`, `fulfilled_at`, `rejection_reason`                           |
 | `SECURITY_INCIDENT`    | `#incident_id`, `incident_type`, `severity`, `affected_record_count`, `description`, `detected_at`, `notified_at`, `resolved_at`, `status`   |
 
-<div style="page-break-after: always;"></div>
 
 #### 1.A.3. Dictionnaire des associations
 
@@ -121,7 +131,7 @@ Le symbole `#` marque l'identifiant.
 | **Exercises**       | `CUSTOMER`          | 0,n     | `DATA_SUBJECT_REQUEST` | 1,1     | -                                                                                                              |
 | **Affects**         | `SECURITY_INCIDENT` | 0,1     | `MERCHANT`             | 0,n     | -                                                                                                              |
 
-<div style="page-break-after: always;"></div>
+
 
 #### 1.A.4. Règles de gestion
 
@@ -237,7 +247,7 @@ Les règles de métier suivantes gouvernent les relations entre entités :
 
 - **#44. Découplage revue/décision de fraude.** Une *revue de fraude* et une *décision de fraude* associées à la même *transaction* ne sont associées structurellement : une *revue* peut aboutir à une actualisation de la *décision*, ou rester sans suite, et une *décision* peut être posée sans *revue* préalable. 
 
-<div style="page-break-after: always;"></div>
+
 
 #### 1.A.5. Règles de passage au modèle logique
 
