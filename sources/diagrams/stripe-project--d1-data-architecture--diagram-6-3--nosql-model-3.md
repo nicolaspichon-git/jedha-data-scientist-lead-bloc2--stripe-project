@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -13,21 +13,21 @@ tags:
   - stripe-project/data-architecture/diagrams/nosql
   - stripe-project/data-architecture/diagrams/nosql/features
 ---
+
 ```mermaid
 flowchart TB
     subgraph OLTP["OLTP"]
         MERCHANT
         CUSTOMER
-        ENTITY
+        ENTITY[/"<i>ENTITY</i>"/]
     end 
 
     subgraph NOSQL["NoSQL"]
-        subgraph COLLECTIONS["Collections"]
+        subgraph COLLS[" "]
             C_ML_FEATURES("ml_features")
-            C_MLF_FEATURES("features")
-            C_MLF_SCORES("model_scores")
         end
-
+        C_MLF_FEATURES("features")
+        C_MLF_SCORES("model_scores")
     end
 
     C_ML_FEATURES === C_MLF_FEATURES

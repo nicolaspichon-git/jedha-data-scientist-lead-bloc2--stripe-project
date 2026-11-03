@@ -1,5 +1,5 @@
 ---
-version: v32
+version: v33
 locale: fr
 tags:
   - _RNCP38777
@@ -19,13 +19,13 @@ sequenceDiagram
 	actor Client 
 	participant App as Application
 	participant OLTP as OLTP 
-	participant Debezium 
+	participant Debezium
 	participant KafkaCdc as Kafka<br/>cdc.transaction
 	participant Flink 
 	participant MLFeat as MongoDB<br/>ml_features
 	participant MConfig as MongoDB<br/>merchant_config
 	participant FraudSvc as Service de scoring 
-	participant KafkaFraud as Kafka<br/>fraud.scores
+	participant KafkaFraud as Kafka<br/>fraud.scoring.logs
 	participant Consumer as Consommateur async. 
 	participant OLAP as OLAP
 	

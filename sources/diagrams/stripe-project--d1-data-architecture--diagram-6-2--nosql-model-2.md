@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -21,13 +21,12 @@ flowchart TB
         CUSTOMER
         COUNTRY
     end 
-
     subgraph NOSQL["NoSQL"]
-        subgraph COLLECTIONS["Collections"]
-            C_USER_SESSIONS("user_sessions")
-            C_US_EVENTS("events")
-            C_US_DEVICE("device")
-        end
+	    subgraph COLLS[" "]
+			C_USER_SESSIONS("user_sessions")
+	    end
+		C_US_EVENTS("events")
+		C_US_DEVICE("device")
     end
 
     C_USER_SESSIONS -.- CUSTOMER

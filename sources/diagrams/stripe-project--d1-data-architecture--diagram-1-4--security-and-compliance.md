@@ -1,5 +1,6 @@
 ---
-version: v32
+version: v33
+locale: fr
 tags:
   - _RNCP38777
   - _2026

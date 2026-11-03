@@ -1,5 +1,5 @@
 ---
-version: v32
+version: v33
 locale: fr
 tags:
   - _RNCP38777
@@ -12,8 +12,7 @@ tags:
   - stripe-project/data-architecture/diagrams
   - stripe-project/data-architecture/diagrams/scoring
 ---
-> GDA : v32
----
+
 ```mermaid
 flowchart TB
     subgraph ACTORS["👤 Acteurs"]
@@ -35,7 +34,7 @@ flowchart TB
         OLTP_CDC["<u><i>Write-Ahead-Log</i></u>"]
     end
 
-    subgraph EBUS["⚪ Bus d'évènements (<i>Kafka</i>)Bus d'évènements"]
+    subgraph EBUS["⚪ Bus d'évènements (<i>Kafka</i>)"]
 	    TOPIC_CDC["<u>topics <code>cdc</code></u><br/>cdc.transaction<br/>..."]
 		TOPIC_FRAUD["<u>topics <code>fraud</code></u><br/>scoring.logs"]
     end

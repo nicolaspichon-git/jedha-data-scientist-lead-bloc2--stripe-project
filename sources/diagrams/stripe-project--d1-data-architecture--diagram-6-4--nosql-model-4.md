@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -19,18 +19,16 @@ flowchart TB
     subgraph OLTP["OLTP"]
         CUSTOMER
         MERCHANT
-        ORDER
+        ORDER[/"<i>ORDER</i>"/]
         TRANSACTION
     end 
-
     subgraph NOSQL["NoSQL"]
-        subgraph COLLECTIONS["Collections"]
+        subgraph COLLS[" "]
             C_CUSTOMER_FEEDBACK("customer_feedback")
-            C_CF_CONTEXT("context")
-            C_CF_CONTENT("content")
-            C_CF_NLP("nlp")
         end
-
+		C_CF_CONTEXT("context")
+		C_CF_CONTENT("content")
+		C_CF_NLP("nlp")
     end
 
     TRANSACTION --> ORDER  

@@ -1,5 +1,5 @@
 ---
-version: v08
+version: v09
 locale: fr
 tags:
   - _RNCP38777
@@ -20,12 +20,11 @@ flowchart TB
         MERCHANT
         COUNTRY
     end 
-
     subgraph NOSQL["NoSQL"]
-        subgraph COLLECTIONS["Collections"]
+        subgraph COLLS[" "]
             C_MERCHANT_CONFIG("merchant_config")
-	        C_MC_RISK("risk_profile")
         end
+	    C_MC_RISK("risk_profile")
     end
 
     C_MERCHANT_CONFIG === C_MC_RISK

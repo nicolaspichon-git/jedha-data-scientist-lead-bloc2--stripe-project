@@ -1,5 +1,5 @@
 ---
-version: v32
+version: v33
 locale: fr
 tags:
   - _RNCP38777
@@ -14,19 +14,6 @@ tags:
 ---
 
 ```mermaid
-%%{init: { 
-	"theme: "default", 
-	"themeVariables": { 
-		"fontSize": "12px", 
-		"nodePadding": 2  
-	},
-    "flowchart": {
-		"nodeSpacing": 25, 
-		"rankSpacing": 20, 
-		"padding": 15 
-    }
-}}%%
-
 flowchart TB
     ACTORS["👤Acteurs"]
     APPS["🟡 Couche applicative<br/>paiement ..."]
@@ -49,9 +36,9 @@ flowchart TB
     OLTP -.->|"3️⃣ <i>Change Data Capture</i>"| EBUS
     EBUS -.->|"2️⃣🄱 logs,<br/>incidents,<br/>fraud scores"| OLTP
 
-    NOSQL -->|"7️⃣ logs, feedbacks"| CONSUMERS
+    NOSQL -->|"7️⃣ app-logs, feedbacks"| CONSUMERS
 
-    NOSQL -.->|"5️⃣ <i>Change Streams</i> &gt; staging"| ORCHESTRATOR
+    NOSQL -.->|"5️⃣ <i>Change Streams</i> &gt; staging"| OLAP
     EBUS -.->|"5️⃣ cdc &gt; staging"| OLAP
 
     ORCHESTRATOR -.->|"6️⃣ déclenche, orchestre<br/><i>dbt</i> + staging"| OLAP
@@ -65,11 +52,11 @@ flowchart TB
     COMPLIANCE_REPORTING_PIPE -.->|"7️⃣ rapport réglementaire"| CONSUMERS
         
 
-    EBUS -.->|"4️⃣ logs, sessions, feedbacks,<br/>calcule features,<br>cache marchand"| NOSQL
+    EBUS -.->|"4️⃣ logs, sessions, feedbacks,<br/>features online,<br>cache marchand"| NOSQL
 
     ML_SERVICES ==>|"8️⃣🅁 autorise/bloque/suspend<br/>les transactions,<br/>en - de 100 ms"| APPS
     NOSQL -->|"8️⃣ features,<br>config. marchand,<br/>en - de 10 ms"| ML_SERVICES
-    ML_SERVICES -.->|"3️⃣ scores"| EBUS
+    ML_SERVICES -.->|"3️⃣ scoring log"| EBUS
 
     style ACTORS fill:#FEF9E7,stroke:#D4AC0D,stroke-width:1px
     style APPS fill:#FEF9E7,stroke:#D4AC0D,stroke-width:1px

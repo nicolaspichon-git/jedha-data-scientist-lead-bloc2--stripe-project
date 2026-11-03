@@ -17,18 +17,17 @@ tags:
 ```mermaid
 flowchart TB
     subgraph OLTP["OLTP"]
+        TRANSACTION
         MERCHANT
-        COUNTRY
     end 
-
     subgraph NOSQL["NoSQL"]
-        subgraph COLLECTIONS["Collections"]
-            C_MERCHANT_CONFIG("merchant_config")
-	        C_MC_RISK("risk_profile")
-        end
+	    subgraph COLLS[" "]
+	        C_EVENT_LOGS("event_logs")
+	    end
+	    C_EL_CONTEXT("context")
     end
-
-    C_MERCHANT_CONFIG === C_MC_RISK
-    C_MERCHANT_CONFIG === MERCHANT
-    C_MERCHANT_CONFIG -.- COUNTRY
+    
+    C_EVENT_LOGS === C_EL_CONTEXT
+    C_EVENT_LOGS -.- TRANSACTION
+    C_EVENT_LOGS -.- MERCHANT
 ```

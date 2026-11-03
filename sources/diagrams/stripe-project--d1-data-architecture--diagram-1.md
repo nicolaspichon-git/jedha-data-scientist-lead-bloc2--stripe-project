@@ -114,7 +114,7 @@ flowchart TB
     APPS -->|"2️⃣ "| OLTP_CORE
     
     OLTP_FRAUD -.->|"2️⃣🄸 <i>Change Data Capture</i>"| OLTP_CDC
-    OLTP_CORE -.->|"2️⃣🄸 <i>hange Data Capture</i>"| OLTP_CDC
+    OLTP_CORE -.->|"2️⃣🄸 <i>Change Data Capture</i>"| OLTP_CDC
     OLTP_ACCESS -.->|"2️⃣🄸 <i>Change Data Capture</i>"| OLTP_CDC
     OLTP_SECURE -.->|"2️⃣🄸 <i>Change Data Capture</i>"| OLTP_CDC
     OLTP_COMPLY -.->|"2️⃣🄸 <i>Change Data Capture</i>"| OLTP_CDC
