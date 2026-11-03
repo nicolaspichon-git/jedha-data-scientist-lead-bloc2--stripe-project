@@ -24,6 +24,17 @@ tags:
 
 ---
 
+- [[#4.A.1. Contexte|4.A.1. Contexte]]
+- [[#4.A.2. Capture des changements (CDC) : _Debezium_|4.A.2. Capture des changements (CDC) : _Debezium_]]
+- [[#4.A.3. Contrats de données : _Confluent Schema Registry_|4.A.3. Contrats de données : _Confluent Schema Registry_]]
+- [[#4.A.4. Traitement de flux : _Apache Flink_|4.A.4. Traitement de flux : _Apache Flink_]]
+- [[#4.A.5. Transformation : _dbt_|4.A.5. Transformation : _dbt_]]
+- [[#4.A.6. Entrepôt analytique : _Snowflake_|4.A.6. Entrepôt analytique : _Snowflake_]]
+- [[#4.A.7. Supervision : _Prometheus_ & _Grafana_|4.A.7. Supervision : _Prometheus_ & _Grafana_]]
+- [[#4.A.8. Qualité des données : _Great Expectations_ + _tests dbt_|4.A.8. Qualité des données : _Great Expectations_ + _tests dbt_]]
+- [[#4.A.9. Synthèse|4.A.9. Synthèse]]
+- [[#Références|Références]]
+
 #### 4.A.1. Contexte
 
 Cet annexe détaille les justifications des décisions technologiques prises dans \[D5\].
@@ -70,8 +81,8 @@ outils déjà choisis.
 
 ###### Pourquoi pas *Kafka Streams* ?
 *Kafka Streams* est une bibliothèque embarquée dans une application JVM, pas un cluster
-opéré séparément — adapté à un traitement simple, mais moins adapté aux **deux** usages déjà
-établis pour ce composant (\[D7, §D7.3.3\], calcul des features de fraude ; \[D5, §D5.8.5\],
+opéré séparément - adapté à un traitement simple, mais moins adapté aux deux usages déjà
+établis pour ce composant (\[D7, §D7.3.3\], calcul des features de fraude ; \[D5, §D5.9.5\],
 alerting sécurité sur `audit.access`) : deux jobs à état, avec fenêtres glissantes, qui
 bénéficient d'être opérés sur un cluster partagé plutôt que dupliqués en applications JVM
 indépendantes.
@@ -129,7 +140,7 @@ Trois raisons, déjà détaillées dans \[D5\] §D5.11 :
 - **Secure Data Sharing** :
 	- \[R0\] exige un reporting interne _et_ un reporting par marchand. Le reporting est déjà cloisonné par *RLS* (\[D3\] §D3.5). Le mécanisme *Secure Data Sharing* de *Snowflake* étend ce cloisonnement : chaque marchand reçoit une vue gouvernée de ses propres données sans duplication ni API dédiée à construire.
 - **Isolation des charges de consommation** 
-	- Même avec un chargement par lots entièrement planifié (\[D1, §D1.3\], \[D5, §D5.8.5\]), plusieurs usages consomment l'entrepôt en parallèle avec des profils différents (tableau de bord marchand, interactif ; reporting conformité, requêtes lourdes planifiées ; chargement ETL). Les _virtual warehouses_ de *Snowflake* isolent chaque charge sur son propre compute, sans contention, sans qu'aucune ne ralentisse les autres.
+	- Même avec un chargement par lots entièrement planifié (\[D1, §D1.3\], \[D5, §D5.9.5\]), plusieurs usages consomment l'entrepôt en parallèle avec des profils différents (tableau de bord marchand, interactif ; reporting conformité, requêtes lourdes planifiées ; chargement ETL). Les _virtual warehouses_ de *Snowflake* isolent chaque charge sur son propre compute, sans contention, sans qu'aucune ne ralentisse les autres.
 
 #### 4.A.7. Supervision : *Prometheus* & *Grafana*
 
