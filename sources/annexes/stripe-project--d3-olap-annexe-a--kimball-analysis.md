@@ -25,6 +25,14 @@ tags:
 > *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D3 : OLAP Annexe A / v22 --- 2026/11/05.*   
 ---
 
+- [[#2.A.1. Méthode et périmètre|2.A.1. Méthode et périmètre]]
+- [[#2.A.2. Étape 1 : Les processus métiers|2.A.2. Étape 1 : Les processus métiers]]
+- [[#2.A.3. Étape 2 : Les grains|2.A.3. Étape 2 : Les grains]]
+- [[#2.A.4. Étape 3 - Les dimensions|2.A.4. Étape 3 - Les dimensions]]
+- [[#2.A.5. Étape 4 : Les faits|2.A.5. Étape 4 : Les faits]]
+- [[#2.A.6. Matrice de bus (Kimball Bus Matrix)|2.A.6. Matrice de bus (Kimball Bus Matrix)]]
+- [[#Références|Références]]
+
 ### 2.A.1. Méthode et périmètre
 
 La méthode **Kimball** est une méthode de conception de système OLAP  (cf. *The Data Warehouse Toolkit* par *Kimball*) : le point de départ n'est pas le schéma source, mais la problématique du métier. Le processus se déroule en quatre étapes, dans l'ordre suivant :
