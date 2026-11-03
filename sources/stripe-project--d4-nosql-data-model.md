@@ -87,7 +87,7 @@ Les collections suivantes sont soumises à une validation *JSON Schema* minimale
 *Caractéristiques* : Volume très élevé, écriture massive, lecture ciblée par fenêtre temporelle. 
 Le sous-document `context` reste _libre_ (forme variable selon le service émetteur). 
 
-![[stripe-project--d1-nosql-data-model--diagram-1-1.svg|600]]
+![[diagrams/stripe-project--d4-nosql-data-model--diagram-1-1.svg|600]]
 
 
 ```python
@@ -166,7 +166,7 @@ Purge automatique de l'entrée de journal 90 jours après sa création (principe
 *Caractéristiques* : une session d'utilisateur est un document. 
 Les événements sont _imbriqués_, car on ne consulte jamais un évènement de clic isolément.
 
-![[stripe-project--d1-nosql-data-model--diagram-1-2.svg|800]]
+![[stripe-project--d4-nosql-data-model--diagram-1-2.svg|800]]
 
 ```python
 from datetime import datetime
@@ -262,7 +262,7 @@ db.command("shardCollection", "stripe.user_sessions",
 
 **Point de conception** : un document continuellement actualisé par entité. C'est le bon grain pour un magasin de features servant l'inférence en temps réel : au moment où une nouvelle transaction arrive, il faut récupérer le profil _courant_ du client (pas l'historique des évaluations passées). Le magasin de features *NoSQL* est donc un cache d'état courant.
 
-![[stripe-project--d1-nosql-data-model--diagram-1-3.svg|800]]
+![[stripe-project--d4-nosql-data-model--diagram-1-3.svg|800]]
 
 ```python
 from datetime import datetime
@@ -334,7 +334,7 @@ db.command("shardCollection", "stripe.ml_features", key={"_id": "hashed"})
 
 *Caractéristiques* : volume modeste, structure hétérogène, recherche plein texte. 
 
-![[stripe-project--d1-nosql-data-model--diagram-1-4.svg]]
+![[stripe-project--d4-nosql-data-model--diagram-1-4.svg]]
 
 ```python
 from datetime import datetime
@@ -424,7 +424,7 @@ db.command("shardCollection", "stripe.customer_feedback", key={"merchant_id": 1}
 
 *Caractéristiques* : cache de référence pour éviter d'interroger les tables transactionnelles à chaque événement applicatif. Petite collection, très lue, quasiment jamais écrite. 
 
-![[stripe-project--d1-nosql-data-model--diagram-1-5.svg|600]]
+![[stripe-project--d4-nosql-data-model--diagram-1-5.svg|600]]
 
 ```python
 from datetime import datetime
@@ -529,17 +529,17 @@ Par exemple, on minimise volontairement les indexes sur le document `event_logs`
 
 ### D4.7. Stratégie de *sharding*
 
-*Principe* : le *cloisonnement par marchand* sert de fil conducteur tant que le motif d'accès dominant n'impose pas une autre clé (principe déjà appliqué dans la base transactionnelle ; cf. \[D2-C\]).
+*Principe* : le *cloisonnement par marchand* sert de fil conducteur tant que le motif d'accès dominant n'impose pas une autre clé (principe déjà appliqué dans la base transactionnelle : cf. \[D2-C\]).
 
 > Rappel : Le *cloisonnement entre marchands* est le principe selon lequel *les données d'un marchand ne se mélangent jamais avec celles d'un autre* , et ce à tous les niveaux du système. Par exemple, un client qui achète chez trois marchands différents n'est pas, dans le modèle, une seule personne pour trois achats mais trois enregistrements `Customer` distincts, un par marchand, sans lien direct entre eux dans les données transactionnelles.
 
-| Collection          | Clé de sharding                     | Justification                                                             |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
-| `event_logs`        | `{ service: 1, timestamp: 1 }`      | Écriture répartie par service émetteur, lecture par fenêtre temporelle    |
-| `user_sessions`     | `{ merchant_id: 1, started_at: 1 }` | Cloisonnement marchand préservé                                           |
-| `ml_features`       | `{ _id: "hashed" }`                 | Répartition uniforme, accès par clé unique sans pattern marchand dominant |
-| `customer_feedback` | `merchant_id`                       | Lecture dominante par marchand                                            |
-| `merchant_config`   | Non "shardée"                       | Volume trop faible                                                        |
+| Collection          | Clé de sharding                     | Justification                                                                   |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| `event_logs`        | `{ service: 1, timestamp: 1 }`      | Écriture répartie par service émetteur, lecture par fenêtre temporelle          |
+| `user_sessions`     | `{ merchant_id: 1, started_at: 1 }` | Cloisonnement marchand préservé                                                 |
+| `ml_features`       | `{ _id: "hashed" }`                 | Répartition uniforme, accès par clé unique, sans pattern <br/>marchand dominant |
+| `customer_feedback` | `merchant_id`                       | Lecture dominante par marchand                                                  |
+| `merchant_config`   | Non "shardée"                       | Volume trop faible                                                              |
 
 ### D4.8. Intégration OLTP / OLAP
 

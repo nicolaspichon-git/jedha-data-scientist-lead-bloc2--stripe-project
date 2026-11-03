@@ -92,7 +92,7 @@ Les tables et leurs dépendances sont détaillées dans les vues suivantes.
 
 ![[diagrams/stripe-step-1--oltp-views--groups-and-tables.svg]]
 
-> _Etiquettes de classe : _
+> _Etiquettes de table : _
 > - ★ : Entité métier principale ;
 > - ⊞ : Entité métier secondaire (extension directe ou indirecte d'une entité principale) ;
 > - ☷ : Enumération ;

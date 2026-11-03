@@ -71,7 +71,7 @@ outils déjà choisis.
 ###### Pourquoi pas *Kafka Streams* ?
 *Kafka Streams* est une bibliothèque embarquée dans une application JVM, pas un cluster
 opéré séparément — adapté à un traitement simple, mais moins adapté aux **deux** usages déjà
-établis pour ce composant (\[D7\] §D7.3.3, calcul des features de fraude ; \[D5\] §D5.8.5,
+établis pour ce composant (\[D7, §D7.3.3\], calcul des features de fraude ; \[D5, §D5.8.5\],
 alerting sécurité sur `audit.access`) : deux jobs à état, avec fenêtres glissantes, qui
 bénéficient d'être opérés sur un cluster partagé plutôt que dupliqués en applications JVM
 indépendantes.
@@ -84,7 +84,7 @@ traite les événements un par un, sans ce plancher structurel.
 
 ###### Ce que *Flink* apporte spécifiquement
 Fenêtres glissantes à faible latence, sémantique *exactly-once*, et surtout la capacité déjà
-exploitée deux fois dans ce projet (\[D5\] §D5.8.5) à maintenir un état par entité sur des
+exploitée deux fois dans ce projet (\[D5, §D5.9.5\]) à maintenir un état par entité sur des
 topics différents, pour des besoins différents, sur un seul moteur.
 
 #### 4.A.5. Transformation : *dbt*
@@ -129,7 +129,7 @@ Trois raisons, déjà détaillées dans \[D5\] §D5.11 :
 - **Secure Data Sharing** :
 	- \[R0\] exige un reporting interne _et_ un reporting par marchand. Le reporting est déjà cloisonné par *RLS* (\[D3\] §D3.5). Le mécanisme *Secure Data Sharing* de *Snowflake* étend ce cloisonnement : chaque marchand reçoit une vue gouvernée de ses propres données sans duplication ni API dédiée à construire.
 - **Isolation des charges de consommation** 
-	- Même avec un chargement par lots entièrement planifié (\[D1\] §D1.3, \[D5\] §D5.8.5), plusieurs usages consomment l'entrepôt en parallèle avec des profils différents (tableau de bord marchand, interactif ; reporting conformité, requêtes lourdes planifiées ; chargement ETL). Les _virtual warehouses_ de *Snowflake* isolent chaque charge sur son propre compute, sans contention, sans qu'aucune ne ralentisse les autres.
+	- Même avec un chargement par lots entièrement planifié (\[D1, §D1.3\], \[D5, §D5.8.5\]), plusieurs usages consomment l'entrepôt en parallèle avec des profils différents (tableau de bord marchand, interactif ; reporting conformité, requêtes lourdes planifiées ; chargement ETL). Les _virtual warehouses_ de *Snowflake* isolent chaque charge sur son propre compute, sans contention, sans qu'aucune ne ralentisse les autres.
 
 #### 4.A.7. Supervision : *Prometheus* & *Grafana*
 

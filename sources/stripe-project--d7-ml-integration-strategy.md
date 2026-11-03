@@ -29,6 +29,7 @@ tags:
 Ce document présente l'intégration des modèles de machine learning dans le système *NoSQL* : extraction des features, déploiement des modèles, monitoring des performances.
 
 ### D7.2. Principes
+
 #### Cas de la détection de fraude
 La production et l'exploitation des modèles de machine learning pour le scoring de fraude s'insèrent dans l'architecture globale sous une contrainte extrêmement forte : 
 	la décision de fraude est une sortie *opérationnelle* qui doit être prise en moins de 100 millisecondes pendant que le client attend la validation de son paiement.
@@ -350,7 +351,7 @@ différé et la politique de réentraînement constituent des propositions infé
 La personnalisation des services pour un client donné reste cloisonnée à un marchand, et un seul : les données comportementales du client d'un marchand ne peuvent pas alimenter les recommandations d'un autre client d'un autre marchand, même si les deux clients correspondent à la même personne physique.
 
 ###### Mode d'exécution
-Calcul par *lots nocturne*, résultats écrits dans la base *NoSQL* et dans l'entrepôt OLA. Aucun traitement de flux nécessaire.
+Calcul par *lots nocturne*, résultats écrits dans la base *NoSQL* et dans l'entrepôt OLAP.
 
 #### D7.6.2. Analytique prédictive
 ###### Cas d'usage
