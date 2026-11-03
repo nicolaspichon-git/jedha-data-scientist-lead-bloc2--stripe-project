@@ -73,5 +73,6 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D4-A\] [*NoSQL Storage Model Rationale*](annexes/stripe-project--d4-nosql-annexe-a--storage-model-rationale.pdf)
 - \[D5-A\] [*Data Pipeline Tools Rationale*](annexes/stripe-project--d5-data-pipeline-annexe-a--tools-rationale.pdf)
 - \[D5-B\] [*Data Pipeline Feature Store Notes*](annexes/stripe-project--d5-data-pipeline-annexe-b--feature-store-notes.pdf)
+
 #### Ressources
 - \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)
