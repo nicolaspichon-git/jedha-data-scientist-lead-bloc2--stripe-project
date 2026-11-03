@@ -72,9 +72,11 @@ Le diagramme suivant montre l'architecture générale du système. Le système e
 	- le système de reporting de conformité pour les données transactionnelles,
 	- un accès direct à certaines collections NoSQL : logs d'applications, feedbacks des clients.
 
-Les flux de données sont détaillés dans §D1.3.2. 
+Les flux de données sont détaillés dans §D1.3.2, §D1.4.2 et §D1.5.2.
 
 ![[diagrams/stripe-project--d1-data-architecture--diagram-1-1--overview.svg]]
+
+<div style="page-break-after: always;"></div>
 
 ### D1.3. Vue du coeur métier
 
@@ -84,7 +86,9 @@ Le coeur métier du système est centré sur la gestion des données applicative
 
 Les flux de données sont détaillés dans §D1.3.2. 
 
-![[diagrams/stripe-project--d1-data-architecture--diagram-1-2--core.svg]]
+![[diagrams/stripe-project--d1-data-architecture--diagram-1-2--core--shrinked.svg]]
+
+<div style="page-break-after: always;"></div>
 
 #### D1.3.2. Flux de données
 
@@ -150,6 +154,8 @@ Les détails du modèle des données non-structurées sont dans \[D4\] (cf. §D4
 ###### customer-feedbacks
 ![[diagrams/stripe-project--d1-data-architecture--diagram-6-4--nosql-model-4.svg|900]]
 
+<div style="page-break-after: always;"></div>
+
 ### D1.4. Vue du scoring de fraude
 
 #### D1.4.1. Architecture
@@ -158,7 +164,9 @@ Le diagramme suivant montre l'architecture du système de détection de fraude e
 
 Les flux de données sont détaillés dans §D1.4.2. 
 
-![[diagrams/stripe-project--d1-data-architecture--diagram-1-3--scoring.svg]]
+![[diagrams/stripe-project--d1-data-architecture--diagram-1-3--scoring--shrinked.svg]]
+
+<div style="page-break-after: always;"></div>
 
 ###### Diagramme de séquence du scoring de fraude au cours d'une transaction 
 
@@ -226,7 +234,6 @@ Détails du modèle des données non-structurées dans \[D4\] (cf. §D4.5.4 : *m
 ###### merchant_config
 ![[diagrams/stripe-project--d1-data-architecture--diagram-6-5--nosql-model-5.svg|500]]
 
-
 ### D1.5. Vue du reporting de sécurité et de conformité
 
 #### D1.5.1. Architecture
@@ -238,6 +245,8 @@ Le diagramme suivant montre comment le système de données couvre certaines que
 Les flux de données sont détaillés dans §D1.5.2. 
 
 ![[diagrams/stripe-project--d1-data-architecture--diagram-1-4--security-and-compliance.svg]]
+
+<div style="page-break-after: always;"></div>
 
 #### D1.5.2. Flux de données
 
@@ -276,6 +285,8 @@ Explication des flux de données liés à la sécurité et à la conformité  :
 > - extract. = extraction 
 > - plan. = planifié 
 > - indé. = indépendante
+
+<div style="page-break-after: always;"></div>
 
 #### D1.5.3. Modèles de données
 ##### D1.5.3.1. Données transactionnelles
@@ -334,8 +345,6 @@ Détails des technologies retenues dans \[D5\].
 
 La sélection de l'entrepôt analytique *Snowflake* est une décision prise dans \[D5\]  et justifiée dans \[D5-A\], mais représentée ici pour permettre au diagramme d'architecture de montrer les choix techniques les plus importants sans avoir à dépendre du document technique \[D5\].
 
-<div style="page-break-after: always;"></div>
-
 ### D1.7. Remarques
 
 ###### `event_logs` vs. `audit.access`
@@ -366,8 +375,6 @@ On a deux types de reporting lié à la *sécurité et à la conformité* :
 Le chemin OLTP est volontairement minimal, aussi proche de la source que possible. D'un autre coté, l'outil de reporting RGPD/PCI-DSS ne peut pas avoir de connexion directe avec la base transactionnelle (cf. §D1.5.2 "alimente les rapports \[...\] sans exposer l'OLTP directement aux outils de reporting" ) . D'où la nécessité d'un job d'extraction dédié.
 
 ---
-
-<div style="page-break-after: always;"></div>
 
 ### Références
 

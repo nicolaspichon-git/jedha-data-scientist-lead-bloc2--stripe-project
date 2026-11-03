@@ -53,9 +53,9 @@ sequenceDiagram
 	    Flink->>MLFeat: actualiser les compteurs glissants
 end
 
-Note over FraudSvc,KafkaFraud: Enregistrement du score (async.)
-FraudSvc->>KafkaFraud: publier le score
-KafkaFraud->>Consumer: consommer le score
-Consumer->>OLTP: écrire FraudScore
+Note over FraudSvc,KafkaFraud: Enregistrement du log de scoring (async.)
+FraudSvc->>KafkaFraud: publier le log de scoring
+KafkaFraud->>Consumer: consommer le log de scoring
+Consumer->>OLTP: écrire FraudScoringLog & FraudScore
 Consumer->>OLAP: alimenter FactFraudEvent
 ```
