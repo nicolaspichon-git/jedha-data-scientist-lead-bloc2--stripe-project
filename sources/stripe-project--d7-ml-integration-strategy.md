@@ -1,5 +1,5 @@
 ---
-version: v09
+version: v11
 locale: fr
 tags:
   - _RNCP38777
@@ -9,7 +9,7 @@ tags:
   - stripe-project
   - stripe-project/step-6
   - stripe-project/deliverables
-  - stripe-project/deliverables/D7
+  - stripe-project/deliverables/d7
   - stripe-project/ml
   - stripe-project/ml/integration
 ---
@@ -20,19 +20,29 @@ tags:
 # 6. Machine Learning Integration
 ## D7. Machine Learning Integration Strategy
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D7 : ML Integration Strategy / v09 --- 2026/11/05.*   
-
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D7 : ML Integration Strategy / v11 --- 2026/11/05.*   
 ---
+
+- [[#D7.1. Contexte|D7.1. Contexte]]
+- [[#D7.3. Cas de la détection de fraude|D7.3. Cas de la détection de fraude]]
+    - [[#D7.3.0. Architecture|D7.3.0. Architecture]]
+    - [[#D7.3.3. Détection de fraude en temps réel|D7.3.3. Détection de fraude en temps réel]]
+    - [[#D7.3.4. Extraction et gestion des features|D7.3.4. Extraction et gestion des features]]
+    - [[#D7.3.8. Déploiement des modèles|D7.3.8. Déploiement des modèles]]
+    - [[#D7.3.9. Monitoring et actualisation|D7.3.9. Monitoring et actualisation]]
+    - [[#D7.3.10. Récapitulatif des technologies|D7.3.10. Récapitulatif des technologies]]
+- [[#D7.4. Autres cas d'utilisation|D7.4. Autres cas d'utilisation]]
+    - [[#D7.4.1. Personnalisation client|D7.4.1. Personnalisation client]]
+    - [[#D7.4.2. Analytique prédictive|D7.4.2. Analytique prédictive]]
+- [[#Références|Références]]
 
 ### D7.1. Contexte
 
 Ce document présente l'intégration des modèles de machine learning dans le système *NoSQL* : extraction des features, déploiement des modèles, monitoring des performances.
-
-### D7.2. Principes
-
-#### Cas de la détection de fraude
+##### Principes
+###### Cas de la détection de fraude
 La production et l'exploitation des modèles de machine learning pour le scoring de fraude s'insèrent dans l'architecture globale sous une contrainte extrêmement forte : 
-	la décision de fraude est une sortie *opérationnelle* qui doit être prise en moins de 100 millisecondes pendant que le client attend la validation de son paiement.
+> la décision de fraude est une sortie *opérationnelle* et doit être prise en moins de 100 millisecondes pendant que le client attend la validation de son paiement.
 
 Cette contrainte guide toute la conception de l'intégration :
 - aucune agrégation/jointure au moment de la décision ;
@@ -40,25 +50,40 @@ Cette contrainte guide toute la conception de l'intégration :
 - les features courants sont lus à la volée par clé unique ;
 - le système *NoSQL* joue le rôle de magasin de features en ligne ;
 - le modèle est servi par un service dédié ;
-- le service de scoring n'est couplé qu'avec le système *NoSQL* (ni *OLTP* ni *OLAP*) ;
-#### Autres cas d'usage
-Les autres utilisations de modèles de machine learning (personnalisation, analyse prédictive) tolèrent des latences supérieures et suivent des chemins différents.
+- le service de scoring n'est couplé qu'avec le système *NoSQL* (ni *OLTP* ni *OLAP*).
+###### Autres cas d'usage
+Les autres utilisations de modèles de machine learning (personnalisation, analyse prédictive) tolèrent des latences supérieures et suivent des chemins d'exécution différents. Comme indiqué dans \[D0, §0.4.3\], les modèles de personnalisation et d'analyse prédictive ne sont pas intégré dans le système de données *Stripe* dans le cadre de l'exercice; Ils sont simplement évoqués en fin de document
+
+<div style="page-break-after: always;"></div>
 
 ### D7.3. Cas de la détection de fraude
-#### D7.3.1. Architecture d'ensemble
+#### D7.3.0. Architecture
 
-| Étape                                            | Composant            | Technologie | Latence |
-| ------------------------------------------------ | -------------------- | ----------- | ------- |
-| Collecte&nbsp;des&nbsp;données                   | Bus d'évènement     | Kafka + Topics `cdc.transaction` & `user.sessions` | Continue |
-| Calcul&nbsp;des&nbsp;features                    | Traitement de flux   | Apache Flink | < 1 s |
-| Magasin&nbsp;de&nbsp;features&nbsp;*online*      | NoSQL | MongoDB + `ml_features` | Lecture < 10 ms |
-| Magasin&nbsp;de&nbsp;features&nbsp;*offline*     | Historique complet, requêtes analytiques | Snowflake | Lot |
-| Service&nbsp;de&nbsp;scoring&nbsp;de&nbsp;fraude | Service dédié | API | < 50 ms |
-| Décision&nbsp;de&nbsp;fraude                     | Application de paiement | S/O | < 100 ms bout en bout |
-| Traçabilité&nbsp;(publication&nbsp;d&nbsp;score) | Bus d'évènement | Kafka + Topics `fraud.scores` | Continue |
-| Monitoring                                       | Métriques et alertes | *Prometheus*, *Grafana* | Continue |
+##### Vue d'ensemble
+Vue d'ensemble des processus impliqués dans le cycle continue d'entrainement, d'évaluation, de déploiement , de monitoring et de réentrainement des modèles de scoring de fraude.
 
-**Flux nominaux** (\*) : 
+![[diagrams/stripe-project--d7-ml-integration-strategy--diagram-2-1--shrinked.svg]]
+
+<div style="page-break-after: always;"></div>
+
+##### Vues détaillées
+##### Datasets
+![[diagrams/stripe-project--d7-ml-integration-strategy--diagram-2-2-a.svg|800]]
+
+<div style="page-break-after: always;"></div>
+
+##### Production
+![[diagrams/stripe-project--d7-ml-integration-strategy--diagram-2-2-b.svg|700]]
+
+<div style="page-break-after: always;"></div>
+
+##### Monitoring
+![[diagrams/stripe-project--d7-ml-integration-strategy--diagram-2-2-c.svg|600]]
+
+#### D7.3.3. Détection de fraude en temps réel
+##### D7.3.3.1 Intégration de la détection de fraude dans le processus de paiement
+
+Les flux de données suivants sont déjà détaillés de bout en bout dans \[D1, §D1.4.1/2\].
 
 1. L'application de paiement transmet la demande de transaction :
 	1. La transaction arrive dans la base *OLTP* ;
@@ -66,16 +91,66 @@ Les autres utilisations de modèles de machine learning (personnalisation, analy
 	2. Parallèlement, le service de scoring :
 		1. Récupère les features et les caches courants de la base *NoSQL* ; 
 		2. Produit un score ;
-		3. Publie le score dans *Kafka* (asynchroniquement);
+		3. Publie l'entrée du journal de scoring dans *Kafka* (asynchroniquement);
 		4. Remonte le score synchroniquement à l'application
 	3. L'application de paiement prend la décision d'autoriser, de bloquer ou de suspendre la transaction en fonction du score ;
-2. Parallèlement, un consommateur *Kafka* reporte continûement les changements de score (publiés dans *Kafka*) dans la table *OLTP* `FraudScore` ;
-3. Parallèlement, un job *Flink* actualise continûement les features de la base *NoSQL* (recalcule les fenêtres glissantes) ;
+2. Parallèlement, un consommateur *Kafka* reporte continûement les entrés du journal de scoring  (publiés dans *Kafka*) dans les tables *OLTP* : `FraudScoringLog` et `FraudScore` ;
+3. Parallèlement, un job *Flink* actualise continûement les features de la base *NoSQL* (en particulier, recalcule les fenêtres glissantes) ;
 
-(\*) flux détaillés de bout en bout dans ~~\[D5\] (§D5.5.4)~~.
+<div style="page-break-after: always;"></div>
 
-#### D7.3.2. Extraction et gestion des features
-##### D7.4.1 Qu'est-ce qu'un *feature*?
+##### D7.3.3.2 Types de fraude ciblés
+
+| Type                        | Signature |
+| --------------------------- | --------- |
+| Carte volée                 | Incohérence géographique, appareil inconnu, montant atypique |
+| Test de cartes              | Rafale de micro-transactions, taux d'échec élevé |
+| Prise de contrôle de compte | Comportement anormal sur un compte légitime |
+| Fraude amicale              | Aucune signature technique - traitement *a posteriori* |
+| Fraude du marchand          | Détectée au KYB et par analyse de flux |
+| Blanchiment                 | Montants sous les seuils, flux circulaires |
+
+##### D7.3.3.3 Architecture de décision
+
+La décision est architecturée en trois couches de filtre stratifiées :
+
+1. **Filtre 1 : règles déterministes.** 
+	- Rapides, explicables, ces règles traitent les cas évidents à coût négligeable : 
+		- plus de *N* tentatives / minute, 
+		- carte sur liste noire, 
+		- pays interdit,
+		- etc.
+2. **Filtre 2 : modèle de scoring.** 
+	- Le modèle produit un score d'anormalité, `anomaly_score` ;
+	- La valeur du score est enregistrée dans la table `FraudScore` (*OLTP*) et dans la collection `ml_features.model_scores` (*NoSQL*). 
+3. **Filtre 3 : décision par seuils.** 
+	- Traduit le score en action en fonction des seuils définis dans `merchant_config` :
+
+| Score | Action |
+| ----- | ------ |
+| `score` < `manual_review_threshold` | Autoriser |
+| `score` in \[`manual_review_threshold`, `auto_block_threshold`\] | Authentification renforcée (*3D* (\*)) |
+| `score` > `auto_block_threshold` | Bloquer |
+
+> _(\*) **3-D Secure (3DS)** est un protocole d’authentification qui complète les systèmes de paiement par carte pour les achats en ligne. Il fait intervenir la banque émettrice pour vérifier l’identité du porteur avant l’autorisation, en utilisant une logique de risque et, si nécessaire, une étape d’authentification supplémentaire. Il renforce la sécurité, aide à respecter les obligations légales, comme la SCA en Europe, et transfère une partie du risque de fraude du marchand vers la banque émettrice. Source : [adyen](https://www.adyen.com/knowledge-hub/3d-secure-guide)._
+
+###### Remarques
+- **Le but de la détection de fraude n'est pas de bloquer *toutes* les fraudes.** 
+	- Une politique trop stricte produirait une grand nombre de faux positifs se traduisant par des transactions légitimes mais refusées. Sur de gros volumes de transaction, le manque à gagner des refus abusifs (vente perdue, client perdu) dépasse fréquemment le coût de la fraude elle-même. Le rôle du seuil intermédiaire est d'optimiser ce compromis : dans l'intervalle du seuil, on ne refuse pas la transaction, mais on demande une vérification supplémentaire.
+
+- **Les seuils sont configurables marchand par marchand.** 
+	- Un vendeur de biens numériques, très exposé, tolère plus de friction qu'un commerce à faible risque. Un seuil global serait inadapté dans les deux cas.
+
+##### D7.3.3.4 Cas des paiements initiés par le marchand
+
+Lors d'un prélèvement d'abonnement les signaux comportementaux d'un utilisateur physique (clickstream, device, géolocalisation) ne sont plus disponibles.
+
+Un modèle calibré sur des paiements initiés par le client marquerait donc systématiquement les prélèvements récurrents comme suspects.
+
+**Solution** : le champ `is_merchant_initiated` de `Transaction` route la transaction vers un modèle distinct, fondé sur d'autres signaux : régularité du prélèvement, ancienneté de l'abonnement, historique d'échecs.
+
+#### D7.3.4. Extraction et gestion des features
+##### D7.3.4.1 Qu'est-ce qu'un *feature*?
 
 Un *feature* est une grandeur dérivée des données brutes, et sélectionnée pour sa valeur prédictive pour un modèle donné. Exemples :
 
@@ -86,9 +161,9 @@ Un *feature* est une grandeur dérivée des données brutes, et sélectionnée p
 | `amount`            | `mean_ticket_deviation_90d`                                   |
 | `status`            | `failed_ratio_7d`                                             |
 | `payment_method_id` | `distinct_cards_30d`                                          |
-|                     |                                                               |
 
-##### D7.4.2 Signaux pour la détection de fraude
+
+##### D7.3.4.2 Signaux pour la détection de fraude
 ###### Ecarts par rapport à l'identité
 - empreinte du navigateur, cohérence entre géolocalisation et pays de la carte de paiement, usage d'un VPN, appareil inconnu.
 ###### Ecarts par rapport au comportement habituel
@@ -130,7 +205,7 @@ Le magasin *online* ne contient que l'état courant des features. L'*entraîneme
 **Technologie** : *Snowflake*
 - Technologie d'entrepôt déjà retenue pour le système *OLAP* (\[D5\] §D5.11) ; 
 - Schéma dédié distinct du modèle *OLAP* ;
-- Réutilise directement la même gouvernance (RLS, stratégie d'effacement RGPD \[D5\] §D5.8.3).
+- Réutilise directement la même gouvernance (RLS, stratégie d'effacement RGPD \[D5, §D5.9.3\] (*droits à l'effacement*)).
 
 |             | Magasin online            | Magasin offline                 |
 | ----------- | ------------------------- | ------------------------------- |
@@ -154,68 +229,16 @@ ressemblent pas à celles sur lesquelles s'est entrainé. Ses prédictions se d�
 
 **Mécanisme de prévention** : une seule définition de feature, partagée par les deux chemins. Le magasin garantit que chaque feature signifie exactement la même chose à l'entraînement et au scoring.
 
-#### D7.3.3. Détection de fraude en temps réel
-##### D7.3.3.1 Types de fraude ciblés
-
-| Type                        | Signature |
-| --------------------------- | --------- |
-| Carte volée                 | Incohérence géographique, appareil inconnu, montant atypique |
-| Test de cartes              | Rafale de micro-transactions, taux d'échec élevé |
-| Prise de contrôle de compte | Comportement anormal sur un compte légitime |
-| Fraude amicale              | Aucune signature technique - traitement *a posteriori* |
-| Fraude du marchand          | Détectée au KYB et par analyse de flux |
-| Blanchiment                 | Montants sous les seuils, flux circulaires |
-
-##### D7.3.3.2 Architecture de décision
-
-La décision est architecturée en trois couches de filtre stratifiées :
-
-1. **Filtre 1 : règles déterministes.** 
-	- Rapides, explicables, ces règles traitent les cas évidents à coût négligeable : 
-		- plus de *N* tentatives / minute, 
-		- carte sur liste noire, 
-		- pays interdit,
-		- etc.
-2. **Filtre 2 : modèle de scoring.** 
-	- Le modèle produit un score d'anormalité, `anomaly_score` ;
-	- La valeur du score est enregistrée dans la table `FraudScore` (*OLTP*) et dans la collection `ml_features.model_scores` (*NoSQL*). 
-3. **Filtre 3 : décision par seuils.** 
-	- Traduit le score en action en fonction des seuils définis dans `merchant_config` :
-
-| Score | Action |
-| ----- | ------ |
-| `score` < `manual_review_threshold` | Autoriser |
-| `score` in \[`manual_review_threshold`, `auto_block_threshold`\] | Authentification renforcée (*3D* (\*)) |
-| `score` > `auto_block_threshold` | Bloquer |
-
-> _(\*) **3-D Secure (3DS)** est un protocole d’authentification qui complète les systèmes de paiement par carte pour les achats en ligne. Il fait intervenir la banque émettrice pour vérifier l’identité du porteur avant l’autorisation, en utilisant une logique de risque et, si nécessaire, une étape d’authentification supplémentaire. Il renforce la sécurité, aide à respecter les obligations légales, comme la SCA en Europe, et transfère une partie du risque de fraude du marchand vers la banque émettrice. Source : [adyen](https://www.adyen.com/knowledge-hub/3d-secure-guide)._
-
-###### Remarques
-- **Le but de la détection de fraude n'est pas de bloquer *toutes* les fraudes.** 
-	- Une politique trop stricte produirait une grand nombre de faux positifs se traduisant par des transactions légitimes mais refusées. Sur de gros volumes de transaction, le manque à gagner des refus abusifs (vente perdue, client perdu) dépasse fréquemment le coût de la fraude elle-même. Le rôle du seuil intermédiaire dan §D7.5.2 est d'optimiser ce compromis : dans l'intervalle du seuil, on ne refuse pas la transaction, mais on demande une vérification supplémentaire.
-
-- **Les seuils sont configurables marchand par marchand.** 
-	- Un vendeur de biens numériques, très exposé, tolère plus de friction qu'un commerce à faible risque. Un seuil global serait inadapté dans les deux cas.
-
-##### D7.3.3.3 Cas des paiements initiés par le marchand
-
-Lors d'un prélèvement d'abonnement les signaux comportementaux d'un utilisateur physique (clickstream, device, géolocalisation) ne sont plus disponibles.
-
-Un modèle calibré sur des paiements initiés par le client marquerait donc systématiquement les prélèvements récurrents comme suspects.
-
-**Solution** : le champ `is_merchant_initiated` de `Transaction` route la transaction vers un modèle distinct, fondé sur d'autres signaux : régularité du prélèvement, ancienneté de l'abonnement, historique d'échecs.
-
-
-#### D7.8. Déploiement des modèles
-##### D7.8.1. Cycle de vie
+#### D7.3.8. Déploiement des modèles
+##### D7.3.8.1. Cycle de vie
 
 1. **Entraînement** - sur le magasin hors ligne, avec versionnement des jeux de données.
-2. **Validation** - sur un échantillon temporel postérieur à celui de l'entraînement, jamais par tirage aléatoire (voir §D7.8.4).
+2. **Validation** - sur un échantillon temporel postérieur à celui de l'entraînement, jamais par tirage aléatoire (voir §D7.3.8.4).
 3. **Enregistrement** - le modèle est déposé dans un registre avec sa version, ses métriques et la définition des features utilisées.
-4. **Déploiement progressif** - voir §D7.8.2.
-5. **Monitoring** - voir §D7.9.
+4. **Déploiement progressif** - voir §D7.3.8.2.
+5. **Monitoring** - voir §D7.3.9.
 
-##### D7.8.2. Stratégie de déploiement
+##### D7.3.8.2. Stratégie de déploiement
 
 **Déploiement fantôme** (*shadow*) - le nouveau modèle score en parallèle de
 l'ancien, sans que ses décisions soient appliquées. On compare les sorties
@@ -229,7 +252,7 @@ si les métriques se dégradent.
 activable. Un modèle de fraude défaillant bloque des paiements légitimes :
 le retour arrière doit être instantané, pas planifié.
 
-##### D7.8.3. Traçabilité
+##### D7.3.8.3. Traçabilité
 
 Chaque score produit est associé à la version du modèle qui l'a généré :
 
@@ -244,7 +267,7 @@ Sans cette traçabilité, il est impossible d'attribuer une dégradation à un
 déploiement, ni de justifier une décision de blocage auprès d'un marchand ou
 d'un régulateur.
 
-##### D7.8.4. Contrainte propre aux données temporelles
+##### D7.3.8.4. Contrainte propre aux données temporelles
 
 La validation ne doit **jamais** se faire par tirage aléatoire.
 
@@ -257,15 +280,15 @@ s'adaptent, les schémas changent.
 **suivante**. C'est la seule façon de mesurer la capacité réelle du modèle à
 généraliser dans le temps.
 
-#### D7.9. Monitoring et actualisation
-##### D7.9.1. Métriques
+#### D7.3.9. Monitoring et actualisation
+##### D7.3.9.1. Métriques
 - **Métriques techniques** : latence de scoring (p50, p95, p99), taux d'erreur du service, fraîcheur des features, décalage du consommateur *Flink*.
 - **Métriques de qualité** : précision, rappel, taux de faux positifs et de faux négatifs, aire sous la courbe.
 - **Métriques métier** : taux d'autorisation, taux de rétro-facturation, montant de fraude évitée, montant de ventes perdues par refus abusif.
 
 Ces trois familles sont nécessaires : un modèle peut être techniquement sain, statistiquement correct, et pourtant coûteux en ventes perdues.
 
-##### D7.9.2. Le problème du label différé
+##### D7.3.9.2. Le problème du label différé
 
 Difficulté structurelle de la détection de fraude : **on ne sait pas immédiatement si une transaction était frauduleuse**.
 
@@ -281,7 +304,7 @@ qui ne dépendent pas du label - distribution des scores, taux de blocage,
 taux d'authentification renforcée. Une dérive de ces indicateurs alerte bien
 avant que les rétro-facturations ne confirment le problème.
 
-##### D7.9.3. Dérive des données et des concepts
+##### D7.3.9.3. Dérive des données et des concepts
 
 **Dérive des données** (*data drift*) : la distribution des features change : nouveau marché, nouveau type de marchand, saisonnalité. Détectée par comparaison statistique entre la distribution d'entraînement et celle observée.
 
@@ -291,7 +314,7 @@ propre à un domaine *adversarial.
 
 Cette dimension *adversariale* distingue la fraude de la plupart des problèmes de machine learning : l'adversaire observe le système et s'y adapte. Un modèle figé perd mécaniquement en efficacité, même sans changement d'infrastructure.
 
-##### D7.9.4. Politique de réentraînement
+##### D7.3.9.4. Politique de réentraînement
 
 | Déclencheur | Action |
 |---|---|
@@ -302,16 +325,16 @@ Cette dimension *adversariale* distingue la fraude de la plupart des problèmes 
 
 Le réentraînement périodique n'est pas une précaution : c'est la réponse structurelle à la dérive *adversariale*.
 
-##### D7.9.5. Explicabilité et conformité
+##### D7.3.9.5. Explicabilité et conformité
 
 Deux exigences imposent que les décisions soient explicables :
 
 - *Vis-à-vis du marchand* : un blocage doit pouvoir être justifié. Un marchand qui perd une vente légitime attend une explication.
-- *Vis-à-vis du régulateur* : le RGPD encadre la décision automatisée produisant des effets significatifs. Le droit à une explication *et à une intervention humaine* s'applique. C'est la fonction du seuil de revue manuelle : au-dessus d'un certain seuil de risque, c'est à un humain de trancher.
+- *Vis-à-vis du régulateur* : *RGPD* encadre la décision automatisée produisant des effets significatifs. Le droit à une explication *et à une intervention humaine* s'applique. C'est la fonction du seuil de revue manuelle : au-dessus d'un certain seuil de risque, c'est à un humain de trancher.
 
-**Mécanismes** : conservation des principaux facteurs ayant contribué au score, traçabilité de la version du modèle, journalisation de chaque décision dans les structures d'audit ~~(`DataAccessLog`, `FactAuditEvent`)~~.
+**Mécanismes** : conservation des principaux facteurs ayant contribué au score, traçabilité de la version du modèle, journalisation de chaque décision dans les structures d'audit.
 
-#### D7.10. Récapitulatif des technologies
+#### D7.3.10. Récapitulatif des technologies
 
 | Fonction                                  | Technologie                                         |
 | ----------------------------------------- | --------------------------------------------------- |
@@ -326,14 +349,14 @@ Deux exigences imposent que les décisions soient explicables :
 
 ###### Note sur les sources
 
-Le document source du projet mentionne explicitement : l'intégration de modèles de machine learning **dans le système NoSQL**, la **détection de fraude en temps réel**, la **personnalisation client**, l'**analytique prédictive**, la nécessité que le pipeline supporte l'**extraction de features** et le **déploiement de modèles**, ainsi que des mécanismes de
-**monitoring des performances et de mise à jour des modèles**. Il mentionne également un champ « fraud indicators » avec des scores d'anomalie.
+Le document source du projet mentionne explicitement : l'intégration de modèles de machine learning dans le système NoSQL, la détection de fraude en temps réel, la personnalisation client, l'analytique prédictive, la nécessité que le pipeline supporte l'extraction de features et le déploiement de modèles, ainsi que des mécanismes de
+monitoring des performances et de mise à jour des modèles. Il mentionne également un champ « fraud indicators » avec des scores d'anomalie.
 
-En revanche, il ne décrit aucun type de fraude spécifique, aucun algorithme, aucun seuil, aucune métrique. Les types de fraude recensés en §4.1, l'architecture de décision en trois couches, la distinction magasin en ligne / hors ligne, les stratégies de déploiement, le traitement du label
+En revanche, il ne décrit aucun type de fraude spécifique, aucun algorithme, aucun seuil, aucune métrique. Les types de fraude recensés en §D7.3.3.2, l'architecture de décision en trois couches, la distinction magasin en ligne / hors ligne, les stratégies de déploiement, le traitement du label
 différé et la politique de réentraînement constituent des propositions inférées, cohérentes avec les exigences exprimées mais non prescrites par le cahier des charges.
 
-### D7.6. Autres cas d'utilisation
-#### D7.6.1. Personnalisation client
+### D7.4. Autres cas d'utilisation
+#### D7.4.1. Personnalisation client
 ###### Cas d'usage
 
 - **Segmentation comportementale** : regroupement des clients selon la fréquence des transactions, le montant moyen, l'ancienneté et la récence d'achat. 
@@ -353,20 +376,15 @@ La personnalisation des services pour un client donné reste cloisonnée à un m
 ###### Mode d'exécution
 Calcul par *lots nocturne*, résultats écrits dans la base *NoSQL* et dans l'entrepôt OLAP.
 
-#### D7.6.2. Analytique prédictive
+#### D7.4.2. Analytique prédictive
 ###### Cas d'usage
 
-| Prédiction | Horizon | Usage |
-|---|---|---|
-| Attrition d'abonnement (*churn*) | 30 jours | Action de rétention marchand |
-| Risque de rétro-facturation | À la transaction | Provisionnement, surveillance |
-| Prévision de revenus | Mensuel | Pilotage marchand et interne |
-| Échec de prélèvement récurrent | À l'échéance | Relance anticipée (*dunning*) |
-
-~~Ce dernier point mérite un mot : prédire qu'un prélèvement va échouer - carte
-proche de l'expiration, historique d'échecs - permet de solliciter le client
-**avant** l'incident, plutôt que d'enclencher une procédure de relance après.
-C'est un cas où la prédiction évite l'événement plutôt que de le constater.~~
+| Prédiction | Usage | Horizon |
+| ---------- | ----- | ------- |
+| Attrition d'abonnement (*churn*) | Campagne de rétention pour le marchand | 30 jours (?) |
+| Risque de rétro-facturation      | Provisionnement, surveillance | À la transaction |
+| Prévision de revenus             | Pilotages marchand et interne | Mensuel |
+| Échec de prélèvement récurrent   | Relance anticipée (*dunning*) | À l'échéance |
 
 ######  Mode d'exécution
 Par lots, alimentant `FactSubscriptionSnapshot` et les tables d'agrégats.
