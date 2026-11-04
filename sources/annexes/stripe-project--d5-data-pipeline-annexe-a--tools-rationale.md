@@ -1,6 +1,6 @@
 ---
-version: v10
-locale : fr
+version: v11
+locale: fr
 tags:
   - _RNCP38777
   - _2026
@@ -20,7 +20,7 @@ tags:
 ## Annexes
 ### 4.A. Data Pipeline Tools Rationale
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D5 : Data Pipeline Architecture / Annexe A / v10 --- 2026/11/05.*
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D5 : Data Pipeline Architecture / Annexe A / v11 --- 2026/11/05.*
 
 ---
 

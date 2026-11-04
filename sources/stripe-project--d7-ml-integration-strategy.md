@@ -400,6 +400,3 @@ Par lots, alimentant `FactSubscriptionSnapshot` et les tables d'agrégats.
 - \[D1\] [*Comprehensive Data Architecture Diagram*](stripe-project--d1-data-architecture.pdf)
 - \[D4\] [*NoSQL Data Model*](stripe-project--d4-nosql-data-model.pdf)
 - \[D5\] [*Data Pipeline Architecture*](stripe-project--d5-data-pipeline-architecture.pdf)
-
-#### Annexes
-- \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)

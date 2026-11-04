@@ -1,5 +1,5 @@
 ---
-version: v10
+version: v11
 locale: fr
 tags:
   - _RNCP38777
@@ -20,7 +20,7 @@ tags:
 # 4. Data Pipeline
 ## D5. Data Pipeline Architecture
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D5 : Data Pipeline Architecture / v10 --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / D5 : Data Pipeline Architecture / v11 --- 2026/11/05.*   
 ---
 
 - [[#D5.1. Contexte|D5.1. Contexte]]

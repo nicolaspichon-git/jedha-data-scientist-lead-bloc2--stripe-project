@@ -1,5 +1,5 @@
 ---
-version: v04
+version: v05
 locale: fr
 tags:
   - _RNCP38777
@@ -22,7 +22,7 @@ tags:
 # 5. Security & Compliance
 ## D6. Security & Compliance Plan
 
-> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D6 : Security & Compliance Plan / v04 - 2026/11/05.*
+> *Nicolas Pichon - AIA RNCP 38777 / BC02 / D6 : Security & Compliance Plan / v05 - 2026/11/05.*
 
 ---
 

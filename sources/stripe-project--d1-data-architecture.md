@@ -391,4 +391,4 @@ Le chemin OLTP est volontairement minimal, aussi proche de la source que possibl
 
 #### Annexes
 - \[D2-D\] [*OLTP Replication, Failover and Disaster Recovery Strategy*](annexes/stripe-project--d2-oltp-annexe-d--disaster-recovery-strategy.pdf)
-- \[D5-A\] [Data Pipeline Supporting Notes](stripe-project--d5-data-pipeline-annexe-a--supporting-notes.pdf)
+- \[D5-A\] [Data Pipeline Tools Rationale Notes](annexes/stripe-project--d5-data-pipeline-annexe-a--tools-rationale.pdf)
