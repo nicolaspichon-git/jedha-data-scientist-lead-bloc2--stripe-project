@@ -207,7 +207,7 @@ Explication des flux de données liés à la détection de fraude  :
 #### D1.4.3. Modèles de données 
 ##### D1.4.3.1. Données transactionnelles
 
-Le diagramme suivant montre une vue compacte du modèle transactionnel logique lié à la détection de fraude. Les détails du modèle transactionnel logique sont dans \[D2\] (cf. §D26 : *Vue Transactions*) .
+Le diagramme suivant montre une vue compacte du modèle transactionnel logique lié à la détection de fraude. Les détails du modèle transactionnel logique sont dans \[D2\] (cf. §D2.6 : *Vue Transactions*) .
 
 ![[diagrams/stripe-project--d1-data-architecture--diagram-4-2--transactional-model-2.svg|400]]
 
