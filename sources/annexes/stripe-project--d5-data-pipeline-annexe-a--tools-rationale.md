@@ -25,7 +25,7 @@ tags:
 ---
 
 - [[#4.A.1. Contexte|4.A.1. Contexte]]
-- [[#4.A.2. Capture des changements (CDC) : _Debezium_|4.A.2. Capture des changements (CDC) : _Debezium_]]
+- [[#4.A.2. Capture des changements (_CDC_) : _Debezium_|4.A.2. Capture des changements (_CDC_) : _Debezium_]]
 - [[#4.A.3. Contrats de données : _Confluent Schema Registry_|4.A.3. Contrats de données : _Confluent Schema Registry_]]
 - [[#4.A.4. Traitement de flux : _Apache Flink_|4.A.4. Traitement de flux : _Apache Flink_]]
 - [[#4.A.5. Transformation : _dbt_|4.A.5. Transformation : _dbt_]]
@@ -46,7 +46,7 @@ On ne reprend pas non plus les outils déjà validés pour les stockages *OLTP* 
 
 Ce document ne considère que les technologies d'exécution du pipeline non encore résolues  : capture, transport, transformation, stockage analytique, supervision.
 
-#### 4.A.2. Capture des changements (CDC) : *Debezium*
+#### 4.A.2. Capture des changements (_CDC_) : _Debezium_
 
 ###### Pourquoi pas *AWS DMS* ?
 *AWS DMS* (*Database Migration Service*) fait techniquement le travail, mais engage
@@ -62,14 +62,14 @@ séparément. Son support de la réplication logique PostgreSQL est natif et mat
 littéralement le mécanisme déjà nommé dans \[D1\] (*"CDC (Debezium ou réplication logique
 PostgreSQL)"*), pas un nouvel outil qui s'ajouterait à l'architecture déjà décrite.
 
-#### 4.A.3. Contrats de données : *Confluent Schema Registry*
+#### 4.A.3. Contrats de données : _Confluent Schema Registry_
 
-###### Pourquoi pas *Apicurio* ?
+###### Pourquoi pas _Apicurio_ ?
 *Apicurio* est une alternative *open source* valable, sans lien avec un fournisseur cloud
 précis — la neutralité n'est donc pas ici le critère décisif, contrairement au CDC ou à
 l'entrepôt.
 
-###### Ce que *Confluent Schema Registry* apporte spécifiquement
+###### Ce que _Confluent Schema Registry_ apporte spécifiquement
 C'est le registre le plus étroitement intégré à *Debezium* et à *Kafka Connect*, déjà
 retenus : la compatibilité de schéma (Avro/Protobuf) entre le connecteur CDC et les
 consommateurs en aval (Flink, Airflow) est directement supportée, sans couche
@@ -77,9 +77,9 @@ d'interopérabilité à ajouter. Un registre alternatif fonctionnerait, mais ré
 vérification de compatibilité que Confluent Schema Registry résout par construction avec les
 outils déjà choisis.
 
-#### 4.A.4. Traitement de flux : *Apache Flink*
+#### 4.A.4. Traitement de flux : _Apache Flink_
 
-###### Pourquoi pas *Kafka Streams* ?
+###### Pourquoi pas _Kafka Streams_ ?
 *Kafka Streams* est une bibliothèque embarquée dans une application JVM, pas un cluster
 opéré séparément - adapté à un traitement simple, mais moins adapté aux deux usages déjà
 établis pour ce composant (\[D7, §D7.3.3\], calcul des features de fraude ; \[D5, §D5.9.5\],
@@ -87,20 +87,20 @@ alerting sécurité sur `audit.access`) : deux jobs à état, avec fenêtres gli
 bénéficient d'être opérés sur un cluster partagé plutôt que dupliqués en applications JVM
 indépendantes.
 
-###### Pourquoi pas *Spark Streaming* ?
+###### Pourquoi pas _Spark Streaming_ ?
 *Spark Streaming* fonctionne par micro-lots, avec un plancher de latence de l'ordre de la
 seconde — incompatible avec l'exigence déjà posée (\[D7\] §D7.3, calcul des features en
 moins de 1 seconde, elle-même contrainte par le budget de bout en bout de 100 ms). *Flink*
 traite les événements un par un, sans ce plancher structurel.
 
-###### Ce que *Flink* apporte spécifiquement
+###### Ce que _Flink_ apporte spécifiquement
 Fenêtres glissantes à faible latence, sémantique *exactly-once*, et surtout la capacité déjà
 exploitée deux fois dans ce projet (\[D5, §D5.9.5\]) à maintenir un état par entité sur des
 topics différents, pour des besoins différents, sur un seul moteur.
 
-#### 4.A.5. Transformation : *dbt*
+#### 4.A.5. Transformation : _dbt_
 
-###### Pourquoi pas *Spark SQL* ?
+###### Pourquoi pas _Spark SQL_ ?
 
 *Spark SQL* est pertinent quand la transformation dépasse ce que SQL exprime nativement
 (traitement distribué complexe, algorithmes itératifs). Les transformations de ce pipeline —
@@ -108,7 +108,7 @@ chargement du schéma en étoile, fusion SCD2, calcul des mesures dérivées (\[
 sont fondamentalement des opérations SQL. Introduire *Spark* reviendrait à opérer un second
 cluster de calcul pour un besoin que l'entrepôt cible peut déjà traiter lui-même.
 
-###### Ce que *dbt* apporte spécifiquement
+###### Ce que _dbt_ apporte spécifiquement
 
 *dbt* exécute ses transformations **directement dans l'entrepôt** (Snowflake, §4.A.6) — pas
 de cluster de calcul séparé à maintenir. Ses transformations sont versionnées comme du code,
@@ -116,9 +116,9 @@ et son cadre de tests intégré alimente directement la stratégie de qualité d
 (§4.A.8), sans outil supplémentaire pour les vérifications les plus courantes (unicité,
 non-nullité, intégrité référentielle).
 
-#### 4.A.6. Entrepôt analytique : *Snowflake*
+#### 4.A.6. Entrepôt analytique : _Snowflake_
 
-###### Pourquoi pas *Redshift* ou *BigQuery* ?
+###### Pourquoi pas _Redshift_ ou _BigQuery_ ?
 
 Les deux fonctionnent techniquement pour un schéma en étoile de cette taille. Mais chacun
 engage explicitement vers un fournisseur cloud (AWS pour Redshift, GCP pour BigQuery) —
@@ -126,15 +126,15 @@ alors qu'aucun autre choix de la stack (Kafka, MongoDB, PostgreSQL, Flink, Airfl
 Ce n'est pas un argument théorique : c'est la même logique qui a déjà écarté AWS DMS en
 CDC (§4.A.2).
 
-###### Pourquoi pas ClickHouse ?
+###### Pourquoi pas _ClickHouse_ ?
 
 *ClickHouse* excelle sur des requêtes analytiques à très fort volume et coût de licence
 nul, mais son support natif du partage de données gouverné entre organisations distinctes
 est moins mature — un manque direct pour le besoin ci-dessous.
 
-###### Ce que Snowflake apporte spécifiquement
+###### Ce que _Snowflake_ apporte spécifiquement
 
-Trois raisons, déjà détaillées dans \[D5\] §D5.11 :
+Trois raisons, déjà détaillées dans \[D5, §D5.11\] :
 - **Neutralité cloud** :
 	- La stack technique existante (Kafka, MongoDB, PostgreSQL, Flink, Airflow) est sélectionnée pour éviter tout engagement avec un fournisseur *cloud* précis. Typiquement, *Redshift* engagerait vers *AWS*, *BigQuery* vers *GCP*. On applique ce principe de neutralité vis-à-vis du fournisseur des services *cloud* en sélectionnant *Snowflake*.
 - **Secure Data Sharing** :
@@ -142,9 +142,9 @@ Trois raisons, déjà détaillées dans \[D5\] §D5.11 :
 - **Isolation des charges de consommation** 
 	- Même avec un chargement par lots entièrement planifié (\[D1, §D1.3\], \[D5, §D5.9.5\]), plusieurs usages consomment l'entrepôt en parallèle avec des profils différents (tableau de bord marchand, interactif ; reporting conformité, requêtes lourdes planifiées ; chargement ETL). Les _virtual warehouses_ de *Snowflake* isolent chaque charge sur son propre compute, sans contention, sans qu'aucune ne ralentisse les autres.
 
-#### 4.A.7. Supervision : *Prometheus* & *Grafana*
+#### 4.A.7. Supervision : _Prometheus_ & _Grafana_
 
-###### Pourquoi pas *Datadog* ?
+###### Pourquoi pas _Datadog_ ?
 
 *Datadog* offre une expérience clé en main et des intégrations nombreuses, mais reste un
 SaaS payant, facturé à l'hôte/à la métrique — un modèle de coût qui croît avec la taille du
@@ -160,13 +160,13 @@ Coût de licence nul, cohérent avec le reste d'une stack majoritairement open s
 
 #### 4.A.8. Qualité des données : *Great Expectations* + *tests dbt*
 
-###### Pourquoi pas *Soda* ?
+###### Pourquoi pas _Soda_ ?
 
 *Soda* propose un cadre d'assertions comparable, mais sans le même couplage avec le cadre de
 tests déjà intégré à *dbt* (§4.A.5) — l'adopter dupliquerait une partie de ce que dbt fournit
 déjà nativement pour les vérifications les plus courantes.
 
-###### Ce que *Great Expectations* + *dbt tests* apportent spécifiquement
+###### Ce que _Great Expectations_ + _dbt tests_ apportent spécifiquement
 
 Les tests dbt (unicité, non-nullité, intégrité référentielle) couvrent gratuitement une
 large part du besoin, puisque dbt est déjà l'outil de transformation retenu. *Great

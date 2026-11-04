@@ -35,7 +35,7 @@ tags:
 - [[#D5.6. Couche 4 : Stockages analytiques|D5.6. Couche 4 : Stockages analytiques]]
     - [[#D5.6.1. Vers l'OLAP : micro-lots|D5.6.1. Vers l'OLAP : micro-lots]]
     - [[#D5.6.2. Vers le NoSQL : flux continu|D5.6.2. Vers le NoSQL : flux continu]]
-    - [[#D5.6.3. Vers le magasin de features ML : traitement de flux|D5.6.3. Vers le magasin de features ML : traitement de flux]]
+    - [[#D5.6.3. Vers le magasin de features _online_ : traitement de flux|D5.6.3. Vers le magasin de features _online_ : traitement de flux]]
     - [[#D5.6.4. La boucle de retour|D5.6.4. La boucle de retour]]
 - [[#D5.7. Cohérence et synchronisation|D5.7. Cohérence et synchronisation]]
     - [[#D5.7.1. Idempotence|D5.7.1. Idempotence]]
@@ -215,7 +215,7 @@ c'est précisément ce qui préserve l'exactitude historique.
 **Justification** : les journaux et sessions n'ont pas d'exigence de
 cohérence forte. Un délai de quelques secondes est sans impact.
 
-#### D5.6.3. Vers le magasin de features *online* : traitement de flux
+#### D5.6.3. Vers le magasin de features _online_ : traitement de flux
 
 **Technologie** : magasin de features *MongoDB* (`ml_features`, déjà spécifié en détail par
 \[D4\] §D4.5.4 - schéma, index, sharding) ; Apache Flink (ou Kafka Streams) pour le calcul

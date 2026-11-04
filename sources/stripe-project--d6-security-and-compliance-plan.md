@@ -241,7 +241,7 @@ Les tables d'agrégats analytiques conçues en \[D3, §D3.4\] sont réutilisées
 | Retard de notification d'un incident de sécurité | H+48 depuis `detected_at`  |
 
 ###### Flux d'exécution en temps réel
-On a déjà défini un mécanisme de détection des évènements de sécurité en temps réel dans \[D5, §D5.8.5\] :  consommateur *Flink*, abonné aux évènements *Kafka* sur le topic `audit.access`.
+On a déjà défini un mécanisme de détection des évènements de sécurité en temps réel dans \[D5, §D5.9.5\] :  consommateur *Flink*, abonné aux évènements *Kafka* sur le topic `audit.access`.
 
 ---
 
