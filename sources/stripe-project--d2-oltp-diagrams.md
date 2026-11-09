@@ -85,7 +85,7 @@ Cette vue regroupe les entités du modèle par fonctions et par dépendances :
 
 Noter que les vues suivantes reprennent les codes couleurs représentés ci-dessous.
 
-![[diagrams/stripe-step-1--oltp-views--groups.svg|700]]
+![[stripe-project--d2-oltp-views--groups.svg|700]]
 
 > *Légende : Une flèche du groupe A vers le groupe B signifie que _des tables de A référencent ou utilisent des tables de B_.*
 
@@ -98,7 +98,7 @@ Les tables sont estampillées en fonction de leur nature, de leurs dépendances,
 
 Les tables et leurs dépendances sont détaillées dans les vues suivantes.
 
-![[diagrams/stripe-step-1--oltp-views--groups-and-tables.svg]]
+![[stripe-project--d2-oltp-views--groups-and-tables.svg]]
 
 > _Etiquettes de table : _
 > - ★ : Entité métier principale ;
@@ -133,13 +133,13 @@ Remarque : la plupart des listes de référence du modèle restent dans leur gro
 
 ###### Coeur de métier
 
-![[diagrams/stripe-step-1--oltp-views--references-1.svg|650]]
+![[stripe-project--d2-oltp-views--references-1.svg|650]]
 
 <div style="page-break-after: always;"></div>
 
 ###### Catégories d'auditables
 
-![[diagrams/stripe-step-1--oltp-views--references-2.svg]]
+![[stripe-project--d2-oltp-views--references-2.svg]]
 
 ---
 
@@ -148,7 +148,7 @@ Remarque : la plupart des listes de référence du modèle restent dans leur gro
 ### D2.4. Vue *Marchands*
 Les tables de l'écosystème *marchand* sont les suivantes (code couleur🔵)  :
 
-![[diagrams/stripe-step-1--oltp-views--merchants.svg]]
+![[stripe-project--d2-oltp-views--merchants.svg]]
 
 
 ---
@@ -159,7 +159,7 @@ Les tables de l'écosystème *marchand* sont les suivantes (code couleur🔵)  :
 Les tables de l'écosystème *client* sont les suivantes (code couleur🟢)  :
 
 
-![[diagrams/stripe-step-1--oltp-views--customers.svg]]
+![[stripe-project--d2-oltp-views--customers.svg]]
 
 ---
 
@@ -169,7 +169,7 @@ Les tables de l'écosystème *client* sont les suivantes (code couleur🟢)  :
 
 Les tables de l'écosystème des *transactions* sont les suivantes (code couleur🔴)  :
 
-![[diagrams/stripe-step-1--oltp-views--transactions.svg]]
+![[stripe-project--d2-oltp-views--transactions.svg]]
 
 Remarque #1 : le délai de réponse du marchand (`response_deadline_days`) est spécifique au réseau de cartes et non au code de justification du litige (`ChargebackReasonCode`). Dans le cadre d'une normalisation stricte, il aurait fallu découpler le réseau de cartes lui même (ex: `CardNetworkPolicy`) du le code de justification, de la même manière que l'on a sorti `Regulation`de `DataSubjectRequest`.
 
@@ -193,17 +193,17 @@ Les tables dédiées aux questions de *sécurité* et de *conformité* forment l
 
 ###### Journalisation des accès et écritures
 
-![[diagrams/stripe-step-1--oltp-views--security-and-regulation-1.svg|650]]
+![[stripe-project--d2-oltp-views--security-and-regulation-1.svg|650]]
 
 <div style="page-break-after: always;"></div>
 
 ###### Conformité et droits des utilisateurs
 
-![[diagrams/stripe-step-1--oltp-views--security-and-regulation-2.svg|650]]
+![[stripe-project--d2-oltp-views--security-and-regulation-2.svg|650]]
 
 ###### Incidents de sécurité
 
-![[diagrams/stripe-step-1--oltp-views--security-and-regulation-3.svg|650]]
+![[stripe-project--d2-oltp-views--security-and-regulation-3.svg|650]]
 
 ---
 

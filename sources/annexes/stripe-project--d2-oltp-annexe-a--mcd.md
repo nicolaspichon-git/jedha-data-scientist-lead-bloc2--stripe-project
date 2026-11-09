@@ -52,19 +52,19 @@ Le modèle conceptuel est schématisé par les diagrammes suivants : vue du coeu
 
 ##### 1.A.1.1. Vues du coeur de métier (transactions hors scoring)
 ###### 1.A.1.1.1. Transactions standards (hors abonnements)
-![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-1-1.svg|700]]
+![[diagrams/stripe-project--d2-oltp-annexe-a--mcd--diagram-1-1.svg|700]]
 
 ###### 1.A.1.1.2. Transactions automatiques (via abonnements)
-![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-1-2.svg|400]]
+![[diagrams/stripe-project--d2-oltp-annexe-a--mcd--diagram-1-2.svg|400]]
 
 ##### 1.A.1.2. Vue du scoring de fraude
 
-![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-2.svg|400]]
+![[diagrams/stripe-project--d2-oltp-annexe-a--mcd--diagram-2.svg|400]]
 
 
 ##### 1.A.1.3. Vue de sécurité & de conformité
 
-![[diagrams/stripe-step-1--oltp-annexe-a--mcd--diagram-3.svg]]
+![[diagrams/stripe-project--d2-oltp-annexe-a--mcd--diagram-3.svg]]
 
 
 #### 1.A.2. Dictionnaire des entités

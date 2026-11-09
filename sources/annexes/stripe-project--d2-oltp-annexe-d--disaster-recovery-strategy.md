@@ -339,7 +339,7 @@ Snapshots complets hebdomadaires + 35 j -> 5 à 6 sauvegardes simultanées
 
 Le diagramme suivant récapitule l'architecture de la solution technique de réplication, bascule et recouvrement présentée en §1.D.2, §1.D.3 et §1.D.4.
 
-![[diagrams/stripe-step-1--oltp-annexe-d--failover--diagram-1.svg]]
+![[stripe-project--d2-oltp-annexe-d--failover--diagram-1.svg]]
 
 > _Légende_ : 
 > - 🔘 : _les applications et le plan de contrôle (Patroni, etcd)_
