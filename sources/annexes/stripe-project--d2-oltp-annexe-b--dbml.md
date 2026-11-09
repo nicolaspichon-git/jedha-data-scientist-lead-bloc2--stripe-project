@@ -38,12 +38,15 @@ tags:
 // v30 : - nouvelles tables FraudReview et FraudDecision (groupe Transaction, #E74C3C) ;
 //       - justification de FraudScore, FraudReview et FraudDecision ;
 //       - mutabilité de FraudReview et FraudDecision ;
-//       - ChangeAuditLog : révision de la note pour réintégrer les données immuables (FraudScore, FraudScoringLog) dans le CAL ;
+//       - ChangeAuditLog : révision de la note pour réintégrer les données immuables (FraudScore, FraudScoringLog) 
+//         dans le CAL ;
 //       - AuditActorType et AuditAction rejoignent le groupe References #95A5A6) ;
-//       - correction de updated_by/updater_type (identification polymorphe, non nulle, +  restriction aux types définis par AuditActorType) ;
+//       - correction de updated_by/updater_type (identification polymorphe, non nulle, 
+//         +  restriction aux types définis par AuditActorType) ;
 //       - correction de reviewer_id/reviewer_type (cf. updated_by/updater_type) ;
 //       - déplacement de AuditActorType/AuditAction dans le groupe 'References' #95A5A6) ;
-//       - correction d'une erreur d'indexation su FraudScoringLog (prend en compte le role du modèle dans l'index de clé primaire composée) ;
+//       - correction d'une erreur d'indexation su FraudScoringLog (prend en compte le role du modèle 
+//         dans l'index de clé primaire composée) ;
 //       - documentation de l'absence de la table CardNetworkPolicy [levée en v35 : table ajoutée] ;
 //       - documentation de l'absence d'attribut précalculé Chargeback.due_at [levée en v34 : due_at ajouté].
 // v31 : correctifs de la revue D2/D8.1 (voir CHANGELOG-v31.md) :
@@ -51,7 +54,9 @@ tags:
 //       - timestamp -> timestamptz (UTC) ;
 //       - cohérence des chemins redondants par FK composites (cloisonnement marchand, moyen de paiement du client,
 //         plan tarifaire du marchand, frais fixe de la devise, produit de l'abonnement) ;
-//       - [RETIRÉ en v33] partitionnement compatible avec les clés : PK (transaction_id, created_at) ; les tables filles portent transaction_created_at ; PK composites sur DataAccessLog / ChangeAuditLog / FraudScoringLog ;
+//       - [RETIRÉ en v33] partitionnement compatible avec les clés : PK (transaction_id, created_at) ; 
+//         les tables filles portent transaction_created_at ; 
+//         PK composites sur DataAccessLog / ChangeAuditLog / FraudScoringLog ;
 //       - identifiants UUID v7 (uuidv7(), PostgreSQL 18) ; 
 //       - timestamp -> timestamptz (UTC) ;
 //       - montants en unités mineures (bigint) ; 
@@ -62,7 +67,8 @@ tags:
 //       - FraudDecision.source_review_id (provenance du label) ;
 //       - ChargebackReasonCode.network_code référence CardNetwork ; 
 //       - AuditActorType.is_human nullable ;
-//       - index : retrait de Transaction(created_at) et Transaction(status_code) ; index partiels dans le DDL complémentaire ;
+//       - index : retrait de Transaction(created_at) et Transaction(status_code) ; 
+//         index partiels dans le DDL complémentaire ;
 //       - CHECK, EXCLUDE, index partiels, immutabilité, rôles, CDC : voir 02_complement.sql.
 // v32 : correctif :
 //       - PaymentMethod.customer_id : référence simple vers Customer, supprimée à tort en v31.
@@ -72,10 +78,12 @@ tags:
 //       - index temporels created_at / evaluated_at / occurred_at rétablis (balayages temporels et purge de rétention) ;
 //       - FraudScore -> FraudScoringLog : la FK composite porte désormais transaction_id (en v31/v32 elle ne
 //         garantissait pas que l'entrée de journal appartienne à la même transaction) ;
-//       - rétention des journaux par purge contrôlée (purge_expired_log, 02_complement.sql) et non plus par suppression de partition ;
+//       - rétention des journaux par purge contrôlée (purge_expired_log, 02_complement.sql) 
+//         et non plus par suppression de partition ;
 //       - libellé de la section des FK composites clarifié (cohérence des chemins redondants).
-// v34 : - Chargeback.due_at ajouté : date limite de réponse précalculée (created_at + ChargebackReasonCode.response_deadline_days),
-//         sur le modèle de DataSubjectRequest.due_at ; contrôle d'écart par la vue v_chargeback_due_discrepancy (02_complement.sql).
+// v34 : - Chargeback.due_at ajouté : date limite de réponse précalculée (created_at + 
+//         ChargebackReasonCode.response_deadline_days),  sur le modèle de DataSubjectRequest.due_at ; 
+//         contrôle d'écart par la vue v_chargeback_due_discrepancy (02_complement.sql).
 // v35 : - CardBrand renommée CardNetwork ; 
 //       - brand_code -> network_code (CardNetwork, PaymentMethod) ; 
 //       - ChargebackReasonCode.card_network -> network_code ;
@@ -103,7 +111,8 @@ Project stripe_oltp {
     - DBML ne sait pas exprimer certaines contraintes : CHECK, EXCLUDE, index partiels, triggers, privilèges ;
     - Partitionnement : aucune table n'est partitionnée ;
     - Horodatages : tous en timestamptz, stockés en UTC. Le fuseau de session du serveur et des clients doit aussi être UTC
-      (ALTER DATABASE ... SET timezone TO 'UTC') pour que CURRENT_DATE, date_trunc et les conversions de date soient reproductibles.
+      (ALTER DATABASE ... SET timezone TO 'UTC') pour que CURRENT_DATE, date_trunc et les conversions de date 
+      soient reproductibles.
       Aucun fuseau métier (marchand, client) n'est porté par le modèle : l'OLAP raisonne en dates UTC (voir D3).
   '''
 }
@@ -147,7 +156,8 @@ Table AuditActorType [headercolor: #95A5A6] {
       client de la plateforme, agent de support , administrateur interne. 
       C'est toujours un humain : is_human = true.
     - service = microservice ou composant applicatif interne agissant de façon autonome ;
-      exemple : le service de facturation qui déclenche un prélèvement d'abonnement à échéance, sans intervention humaine directe à cet instant précis. 
+      exemple : le service de facturation qui déclenche un prélèvement d'abonnement à échéance, 
+      sans intervention humaine directe à cet instant précis. 
       C'est toujours un non-humain : is_human = false.
     - system = un processus système/plateforme au sens large : job planifié, traitement batch, consommateur CDC. 
       C'est toujours non-humain : is_human = false. 
@@ -181,7 +191,8 @@ Table AuditAction [headercolor: #95A5A6] {
       C'est toujours une operation critique (is_sensitive = true) et justifiable (requires_justification = true) ;
     - login : tentative d'accès au système (qu'elle soit réussie ou échouée) ;
       une action de login n'est pas, en soi, une opération sensible ; 
-      il faudra l'associer au résultat de l'authentification pour déterminer la nature critique de l'action (cf. 'was_authorized' dans DataAccessLog) ;
+      il faudra l'associer au résultat de l'authentification pour déterminer la nature critique de l'action 
+      (cf. 'was_authorized' dans DataAccessLog) ;
       
     Actions d'écriture (cf. ChangeAuditLog) :
     - create, update, delete : opérations de mutation classiques sur une ligne d'une table auditée ;
@@ -1042,5 +1053,4 @@ Ref fk_frauddecision_review: FraudDecision.(source_review_id, transaction_id) > 
 Ref fk_dataaccesslog_customer_merchant: DataAccessLog.(merchant_id, customer_id) >? Customer.(merchant_id, customer_id)
 Ref fk_consent_customer_merchant: ConsentRecord.(merchant_id, customer_id) > Customer.(merchant_id, customer_id)
 Ref fk_dsr_customer_merchant: DataSubjectRequest.(merchant_id, customer_id) > Customer.(merchant_id, customer_id)
-
 ```
