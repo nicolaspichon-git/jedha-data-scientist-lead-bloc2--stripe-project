@@ -1,5 +1,5 @@
 ---
-version: v03
+version: v04
 locale: en
 tags:
   - _RNCP38777
@@ -16,7 +16,7 @@ tags:
 
 # Deliverables Checklist
 
-> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist / v03 --- 2026/11/05.*   
+> *Nicolas Pichon --- AIA RNCP 38777 / BC02 / Checklist / v04 --- 2026/11/05.*   
 ---
 
 ## D1. Comprehensive Data Architecture Diagram
@@ -45,12 +45,12 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 
 ---
 
-# Références
+# References
 
-#### Spécifications
+#### Specifications
 - \[D0\] [*Stripe Project Introduction*](stripe-project--d0-introduction.pdf)
 
-#### Livrables
+#### Deliverables
 - \[D1\] [*Comprehensive Data Architecture Diagram*](stripe-project--d1-data-architecture.pdf)
 - \[D2\] [*OLTP Entity-Relation Diagrams*](stripe-project--d2-oltp-diagrams.pdf)
 - \[D3\] [*OLAP System Schema Design*](stripe-project--d3-olap-design.pdf)
@@ -62,7 +62,7 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D8-2\] [*SQL and NoSQL Queries : OLAP Queries*](stripe-project--d8-olap-queries.pdf)
 - \[D8-3\] [*SQL and NoSQL Queries : NoSQL Queries*](stripe-project--d8-nosql-queries.pdf)
 
-#### Annexes
+#### Appendices
 - \[D2-A\] [*OLPT Conceptual Data Model*](annexes/stripe-project--d2-oltp-annexe-a--mcd.pdf)
 - \[D2-B\] [*OLTP Physical Data Model*](annexes/stripe-project--d2-oltp-annexe-b--dbml.pdf)
 - \[D2-C\] [*OLTP Design Notes*](annexes/stripe-project--d2-oltp-annexe-c--design-notes.pdf)
@@ -74,5 +74,5 @@ A set of SQL and NoSQL queries demonstrating how key business questions (e.g., r
 - \[D5-A\] [*Data Pipeline Tools Rationale*](annexes/stripe-project--d5-data-pipeline-annexe-a--tools-rationale.pdf)
 - \[D5-B\] [*Data Pipeline Feature Store Notes*](annexes/stripe-project--d5-data-pipeline-annexe-b--feature-store-notes.pdf)
 
-#### Ressources
+#### Resources
 - \[R0\] [Stripe Business Case](stripe-project--business-case.pdf)
